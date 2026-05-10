@@ -9,13 +9,16 @@
 #include <stdio.h>
 
 #include "Grid.h"
+#include "GUI.h"
 
+float targetZoom;
 Vector2 dragBegin;
 bool isDragging;
 
 void INPUT_init() {
     dragBegin = (Vector2){0, 0};
     isDragging = false;
+    targetZoom = GRID_zoom;
 }
 
 void INPUT_process() {
@@ -54,12 +57,43 @@ void INPUT_process() {
 
     // zoom in
     if (GetMouseWheelMove() > 0) {
-        GRID_zoom *= (steps+1);
+        if (targetZoom < MAX_ZOOM)
+            targetZoom *= (1 + steps/2);
     }
 
     // zoom out
     if (GetMouseWheelMove() < 0) {
-        GRID_zoom /= (steps+1);
+        if (targetZoom > MIN_ZOOM)
+            targetZoom /= (1 + steps/2);
+    }
+
+    // smooth zoom lerpin'
+    if (targetZoom != GRID_zoom) {
+
+        // hihi, haha, some vector math for nice zooming :)
+
+        // convert the mouse pos into world space with the current zoom
+        Vector2 mousePos = GetMousePosition();
+        Vector2 mousePosWorldA = LIB_screenSpaceToWorldSpace(mousePos);
+
+        // approach targetZoom
+        GRID_zoom = LIB_lerp(GRID_zoom, targetZoom, 0.2f);
+
+        // convert the mouse pos into world space with the new zoom
+        Vector2 mousePosWorldB = LIB_screenSpaceToWorldSpace(mousePos);
+
+        // convert both positions back into screen space
+        Vector2 mousePosScreenA = LIB_worldSpaceToScreenSpace(mousePosWorldA);
+        Vector2 mousePosScreenB = LIB_worldSpaceToScreenSpace(mousePosWorldB);
+
+        // apply the difference to the screen space camera pos to compensate
+        GRID_cameraPos.x += mousePosScreenB.x - mousePosScreenA.x;
+        GRID_cameraPos.y += mousePosScreenB.y - mousePosScreenA.y;
+
+        // end this madness when were close enough
+        if (fabsf(GRID_zoom - targetZoom) < ZOOM_LERP_CUTOFF) {
+            GRID_zoom = targetZoom;
+        }
     }
 
     // -----------------------------------------------------------------------------------------------------------------

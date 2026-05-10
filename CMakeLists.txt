@@ -9,4 +9,11 @@ add_executable(sim3 main.c
         GUI/Grid.c
         GUI/GUI.h
         GUI/Input.c
-        GUI/Input.h)
+        GUI/Input.h
+        GUI/GUI.c
+        GUI/Drawables.h
+        GUI/Drawables.c
+        GUI/Drawables/Wire.h
+        GUI/Drawables/Wire.c
+        GUI/Bench.h
+        GUI/Bench.c)

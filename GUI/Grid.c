@@ -5,6 +5,8 @@
 #include "GUI.h"
 #include "Grid.h"
 
+#include <math.h>
+
 float GRID_zoom;
 Vector2 GRID_cameraPos;
 Vector2 GRID_cameraOffset;
@@ -20,11 +22,14 @@ void GRID_draw() {
     cameraPosition.x += GRID_cameraOffset.x;
     cameraPosition.y += GRID_cameraOffset.y;
 
-    int gridSpacing = GRID_SPACING * GRID_zoom;
+    float gridSpacing = GRID_SPACING * GRID_zoom;
+    Color gridColor = (Color) {
+        0,0,0, 128 * (GRID_zoom > 1 ? 1 : GRID_zoom),
+    };
 
-    for (int x = (int)cameraPosition.x % gridSpacing; x < WINDOW_WIDTH; x += gridSpacing) {
-        for (int y = (int)cameraPosition.y % gridSpacing; y < WINDOW_HEIGHT; y += gridSpacing) {
-            DrawPixel(x, y, BLACK);
+    for (float x = fmod(cameraPosition.x, gridSpacing); x < WINDOW_WIDTH; x += gridSpacing) {
+        for (float y = fmod(cameraPosition.y, gridSpacing); y < WINDOW_HEIGHT; y += gridSpacing) {
+            DrawPixel(x, y, gridColor);
         }
     }
 }
