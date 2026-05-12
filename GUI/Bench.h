@@ -8,6 +8,13 @@
 
 #define NUM_COLORS 10
 
+typedef enum BENCH_WORKING_MODE {
+    IDLE,
+    MOVING_POINT,
+    DRAWING_WIRE,
+    PLACE_FIXED_CONTACT,
+} bench_working_mode_t;
+
 static Color wireColors[] = {
     (Color){11, 57, 84, 255},
     (Color){8, 126, 139, 255},
@@ -15,9 +22,7 @@ static Color wireColors[] = {
     (Color){200, 29, 37, 255},
 };
 
-extern int currentColor;
-extern Vector2 startPos;
-extern bool hasStartPos;
+extern bench_working_mode_t BENCH_benchMode;
 
 void BENCH_init();
 void BENCH_process();

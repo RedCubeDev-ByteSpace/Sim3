@@ -5,6 +5,7 @@
 #include "GUI/GUI.h"
 #include "GUI/Grid.h"
 #include "GUI/Input.h"
+#include "Sim/SimulationSpace.h"
 
 int main(void) {
     printf("Hello, World!\n");
@@ -19,6 +20,7 @@ int main(void) {
     INPUT_init();
     DRAWABLES_init();
     BENCH_init();
+    SIMSPACE_init();
 
     // main draw loop
     while (!WindowShouldClose()) {
@@ -27,6 +29,7 @@ int main(void) {
         // Process all events
         INPUT_process();
         BENCH_process();
+        SIMSPACE_process();
 
         // -------------------------------------------------------------------------------------------------------------
         // Draw the screen

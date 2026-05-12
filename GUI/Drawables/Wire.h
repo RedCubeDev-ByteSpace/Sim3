@@ -12,6 +12,7 @@ typedef struct DRW_WIRE {
     drawable_t base;
 
     bool active;
+    bool error;
     Color color;
     Vector2 start;
     Vector2 end;

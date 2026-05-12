@@ -6,6 +6,7 @@
 
 #include <stdlib.h>
 
+#include "Drawables/FixedContact.h"
 #include "Drawables/Wire.h"
 
 
@@ -15,25 +16,10 @@ void DRAWABLES_init() {
     for (int i = 0; i < MAX_DRAWABLES; i++) {
         drawables[i] = NULL;
     }
-
-    drw_wire_t *wire;
-    for (int i = 0; i < 10; ++i) {
-        wire = malloc(sizeof(drw_wire_t));
-        DRAWABLES_WIRE_init(wire, (Vector2){5 + i,5}, (Vector2){5 + i,10}, ORANGE);
-        DRAWABLES_enqueue((drawable_t*)wire);
-
-        wire = malloc(sizeof(drw_wire_t));
-        DRAWABLES_WIRE_init(wire, (Vector2){5 + i,10}, (Vector2){7 + i,20}, ORANGE);
-        DRAWABLES_enqueue((drawable_t*)wire);
-
-        wire = malloc(sizeof(drw_wire_t));
-        DRAWABLES_WIRE_init(wire, (Vector2){7 + i,20}, (Vector2){7 + i,30}, ORANGE);
-        DRAWABLES_enqueue((drawable_t*)wire);
-    }
-
 }
 
 int DRAWABLES_enqueue(drawable_t *drawable) {
+    if (drawable == NULL) return -1; // bro what do you expect this to do
 
     // look through the buffer for a free space
     for (int i = 0; i < MAX_DRAWABLES; i++) {
@@ -41,6 +27,7 @@ int DRAWABLES_enqueue(drawable_t *drawable) {
 
         // found one -> use it
         drawables[i] = (drawable_t*)drawable;
+        drawable->drawableId = i; // remember where this is for cleanup later
         return i;
     }
 
@@ -63,5 +50,18 @@ void DRAWABLES_drawSingle(drawable_t *drawable) {
             DRAWABLES_WIRE_draw((drw_wire_t*)drawable);
             break;
 
+        case DRAWABLE_FIXED_CONTACT:
+            DRAWABLES_FIXED_CONTACT_draw((drw_fixed_contact_t*)drawable);
+            break;
+
+    }
+}
+
+void DRAWABLES_unload(drawable_t *drawable) {
+    switch (drawable->type) {
+        case DRAWABLE_WIRE:
+            drawables[drawable->drawableId] = NULL;
+            free(drawable);
+            break;
     }
 }

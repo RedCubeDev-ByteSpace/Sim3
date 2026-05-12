@@ -23,3 +23,11 @@ Vector2 LIB_screenSpaceToWorldSpace(Vector2 screenSpace) {
         (screenSpace.y - GRID_cameraPos.y - GRID_cameraOffset.y) / (GRID_SPACING * GRID_zoom)
     };
 }
+
+bool LIB_IsVector2InRectangle(Vector2 pos, Rectangle rect) {
+    if (pos.x >= rect.x && pos.y >= rect.y && pos.x <= rect.x + rect.width && pos.y <= rect.y + rect.height) {
+        return true;
+    }
+
+    return false;
+}

@@ -16,4 +16,16 @@ add_executable(sim3 main.c
         GUI/Drawables/Wire.h
         GUI/Drawables/Wire.c
         GUI/Bench.h
-        GUI/Bench.c)
+        GUI/Bench.c
+        Sim/Components/Connection.c
+        Sim/Components/Connection.h
+        Sim/Components/ConnectionPoint.c
+        Sim/Components/ConnectionPoint.h
+        Sim/Components/ConnectionPointList.c
+        Sim/Components/WireList.c
+        Sim/SimulationSpace.c
+        Sim/SimulationSpace.h
+        GUI/Drawables/FixedContact.c
+        GUI/Drawables/FixedContact.h
+        Sim/Components/FixedContact.c
+        Sim/Components/FixedContact.h)
