@@ -5,6 +5,7 @@
 #include "GUI/GUI.h"
 #include "GUI/Grid.h"
 #include "GUI/Input.h"
+#include "Sim/SimulationResources.h"
 #include "Sim/SimulationSpace.h"
 
 int main(void) {
@@ -12,10 +13,13 @@ int main(void) {
 
     // start raylib window
     SetConfigFlags(FLAG_MSAA_4X_HINT);
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "sim3");
     SetTargetFPS(TARGET_FPS);
 
     // Initialize everything
+    SIMRES_init();
+    GUI_init();
     GRID_init();
     INPUT_init();
     DRAWABLES_init();

@@ -15,6 +15,9 @@
 #define MIN_ZOOM 0.3f
 #define ZOOM_LERP_CUTOFF 0.001f
 
+extern Font GUI_computerModern;
+void GUI_init();
+
 float LIB_lerp(float a, float b, float f);
 Vector2 LIB_worldSpaceToScreenSpace(Vector2 worldSpace);
 Vector2 LIB_screenSpaceToWorldSpace(Vector2 screenSpace);

@@ -3,7 +3,16 @@
 //
 #include "raylib.h"
 #include "GUI.h"
+
+#include <stddef.h>
+
 #include "Grid.h"
+
+Font GUI_computerModern;
+void GUI_init() {
+    GUI_computerModern = LoadFontEx("../Resources/cmunbx.ttf", 100, NULL, 0);
+    SetTextureFilter(GUI_computerModern.texture, TEXTURE_FILTER_BILINEAR);
+}
 
 float LIB_lerp(float a, float b, float f)
 {

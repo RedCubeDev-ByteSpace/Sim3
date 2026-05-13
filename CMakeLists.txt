@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 4.2)
 project(sim3 C)
 
 set(CMAKE_C_STANDARD 11)
-link_libraries(raylib m)
+link_libraries(raylib m json-c)
 
 add_executable(sim3 main.c
         GUI/Grid.h
@@ -28,4 +28,10 @@ add_executable(sim3 main.c
         GUI/Drawables/FixedContact.c
         GUI/Drawables/FixedContact.h
         Sim/Components/FixedContact.c
-        Sim/Components/FixedContact.h)
+        Sim/Components/FixedContact.h
+        Sim/Components/Chip.c
+        Sim/Components/Chip.h
+        Sim/SimulationResources.c
+        Sim/SimulationResources.h
+        GUI/Drawables/Chip.c
+        GUI/Drawables/Chip.h)

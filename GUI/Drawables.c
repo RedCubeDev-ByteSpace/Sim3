@@ -6,6 +6,7 @@
 
 #include <stdlib.h>
 
+#include "Drawables/Chip.h"
 #include "Drawables/FixedContact.h"
 #include "Drawables/Wire.h"
 
@@ -16,6 +17,10 @@ void DRAWABLES_init() {
     for (int i = 0; i < MAX_DRAWABLES; i++) {
         drawables[i] = NULL;
     }
+
+    drw_chip_t *chip = malloc(sizeof(drw_chip_t));
+    DRAWABLES_CHIP_init(chip, (Vector2){10, 10}, "74LS00", "4x 2-Input-NOR", 7);
+    DRAWABLES_enqueue((drawable_t*)chip);
 }
 
 int DRAWABLES_enqueue(drawable_t *drawable) {
@@ -52,6 +57,10 @@ void DRAWABLES_drawSingle(drawable_t *drawable) {
 
         case DRAWABLE_FIXED_CONTACT:
             DRAWABLES_FIXED_CONTACT_draw((drw_fixed_contact_t*)drawable);
+            break;
+
+        case DRAWABLE_CHIP:
+            DRAWABLES_CHIP_draw((drw_chip_t*)drawable);
             break;
 
     }
