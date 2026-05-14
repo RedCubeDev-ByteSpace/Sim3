@@ -19,9 +19,8 @@ void SIM_CONNECTION_init(sim_connection_t *me, Color wireColor) {
 
 void SIM_CONNECTION_unload(sim_connection_t *me) {
     SIM_COMP_LIST_clear(&me->lstConnectedPoints);
-    SIM_CONNECTION_DRAWABLE_LIST_clear(&me->lstDrawables);
+    SIM_CONNECTION_clearDrawables(me);
     SIM_CONNECTION_VECTOR_PAIR_LIST_clear(&me->lstVectorPairs);
-    free(me);
 }
 
 void SIM_CONNECTION_refreshState(sim_connection_t *me) {

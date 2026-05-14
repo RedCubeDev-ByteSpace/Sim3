@@ -25,3 +25,8 @@ void SIM_FIXED_CONTACT_init(sim_fixed_contact_t *me, Vector2 position, bool stat
 void SIM_FIXED_CONTACT_refreshDrawable(sim_fixed_contact_t *me) {
     me->contact->high = me->point.state == CONNECTION_POINT_HIGH;
 }
+
+void SIM_FIXED_CONTACT_unload(sim_fixed_contact_t *me) {
+    DRAWABLES_unload((drawable_t*)me->contact);
+    SIM_COMP_LIST_removeConnectionPointRef(SIMSPACE_lstConnectionPoints, &me->point);
+}

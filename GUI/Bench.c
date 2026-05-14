@@ -59,8 +59,9 @@ void BENCH_process() {
 
                 hasAttachmentVertex = false;
 
-                if (thisConnection != NULL && thisConnection->lstConnectedPoints.length == 0) {
+                if (thisConnection != NULL && thisConnection->lstVectorPairs.length == 0) {
                     SIM_CONNECTION_unload(thisConnection);
+                    free(thisConnection);
                 }
                 thisConnection = NULL;
             }
@@ -74,11 +75,27 @@ void BENCH_process() {
         }
 
         // "Fixed Contact Place" Button
-        if (LIB_IsVector2InRectangle(mousePos, (Rectangle){ 5, 40, 30, 30})) {
+        if (LIB_IsVector2InRectangle(mousePos, (Rectangle){ 5, 35 + 5, 30, 30})) {
 
             // if we're not currently in wire mode -> go there
             if (BENCH_benchMode != PLACE_FIXED_CONTACT) {
                 BENCH_benchMode = PLACE_FIXED_CONTACT;
+            }
+
+            // otherwise, if we are: switch to idle
+            else {
+                BENCH_benchMode = IDLE;
+            }
+
+            return;
+        }
+
+        // "Delete" Button
+        if (LIB_IsVector2InRectangle(mousePos, (Rectangle){ 5, 2 * 35 + 5, 30, 30})) {
+
+            // if we're not currently in wire mode -> go there
+            if (BENCH_benchMode != DELETION) {
+                BENCH_benchMode = DELETION;
             }
 
             // otherwise, if we are: switch to idle
@@ -234,6 +251,69 @@ void BENCH_process() {
             SIM_COMP_LIST_appendFixedContact(SIMSPACE_lstFixedContacts, contact);
         }
     }
+
+    // -------------------------------------------------------------------------------------------
+    // Deletion mode
+    if (BENCH_benchMode == DELETION) {
+        if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
+
+            sim_comp_list_t lst;
+            SIM_COMP_LIST_init(&lst);
+
+            // ---------------------------------------------------------------------------------------------------------
+            // have we hit a wire?
+            // kill it!
+            for (int i = 0; i < SIMSPACE_lstConnections->length; ++i) {
+                sim_connection_t *con = SIMSPACE_lstConnections->buffer[i];
+
+                for (int ii = 0; ii < con->lstVectorPairs.length; ++ii) {
+                    sim_vector_pair_t pair = con->lstVectorPairs.buffer[ii];
+
+                    if (pair.from.x == wpos.x && pair.from.y == wpos.y
+                        ||
+                        pair.to.x == wpos.x && pair.to.y == wpos.y) {
+
+                        SIM_COMP_LIST_appendConnection(&lst, con);
+                        goto next_con;
+                    }
+                }
+
+                next_con:
+            }
+
+            // death
+            for (int i = 0; i < lst.length; ++i) {
+                sim_connection_t *con = lst.buffer[i];
+
+                SIM_CONNECTION_unload(con);
+                SIM_COMP_LIST_removeConnectionRef(SIMSPACE_lstConnections, con);
+                free(con);
+            }
+
+            SIM_COMP_LIST_clear(&lst);
+
+            // ---------------------------------------------------------------------------------------------------------
+            // have we hit a fixed contact?
+            for (int i = 0; i < SIMSPACE_lstFixedContacts->length; ++i) {
+                sim_fixed_contact_t *contact = SIMSPACE_lstFixedContacts->buffer[i];
+
+                if (contact->point.position.x == wpos.x && contact->point.position.y == wpos.y) {
+                    SIM_COMP_LIST_appendFixedContact(&lst, contact);
+                }
+            }
+
+            // death
+            for (int i = 0; i < lst.length; ++i) {
+                sim_fixed_contact_t *contact = lst.buffer[i];
+
+                SIM_FIXED_CONTACT_unload(contact);
+                SIM_COMP_LIST_removeFixedContactRef(SIMSPACE_lstFixedContacts, contact);
+                free(contact);
+            }
+
+            SIM_COMP_LIST_clear(&lst);
+        }
+    }
 }
 
 void BENCH_draw() {
@@ -260,6 +340,11 @@ void BENCH_draw() {
             DRAWABLES_FIXED_CONTACT_draw(newContact);
         break;
 
+        case DELETION:
+            DrawLineEx((Vector2){wpos.x + cos(rotation) * CURSOR_WIDTH, wpos.y + sin(rotation) * CURSOR_WIDTH}, (Vector2){wpos.x - cos(rotation) * CURSOR_WIDTH, wpos.y - sin(rotation) * CURSOR_WIDTH}, CURSOR_THICKNESS, wireColors[0]);
+            DrawLineEx((Vector2){wpos.x + cos(-rotation - PI/2) * CURSOR_WIDTH, wpos.y + sin(-rotation - PI/2) * CURSOR_WIDTH}, (Vector2){wpos.x - cos(-rotation - PI/2) * CURSOR_WIDTH, wpos.y - sin(-rotation - PI/2) * CURSOR_WIDTH}, CURSOR_THICKNESS, wireColors[0]);
+        break;
+
         default:
             DrawLineEx((Vector2){mousePos.x, mousePos.y - CURSOR_WIDTH}, (Vector2){mousePos.x, mousePos.y + CURSOR_WIDTH}, CURSOR_THICKNESS, wireColors[0]);
             DrawLineEx((Vector2){mousePos.x - CURSOR_WIDTH, mousePos.y}, (Vector2){mousePos.x + CURSOR_WIDTH, mousePos.y}, CURSOR_THICKNESS, wireColors[0]);
@@ -276,35 +361,57 @@ void BENCH_draw() {
 
     // -----------------------------------------------------------------------------------------------------------------
     // Draw Buttons
+    int anchorY = 0;
 
     // ---------------------------
-    // Line enable button
+    // Line mode button
     bool fillLineButton = BENCH_benchMode == DRAWING_WIRE || IsKeyDown(KEY_ESCAPE);
     DrawRectangleRounded((Rectangle){
-        5, 5, 30, 30
+        5, anchorY + 5, 30, 30
     }, 0.1f, 3, fillLineButton ? BLACK : WHITE);
 
-    DrawLineEx((Vector2){10, 10}, (Vector2){30, 30}, 2, fillLineButton ? WHITE : BLACK);
+    DrawLineEx((Vector2){10, anchorY + 10}, (Vector2){30,  anchorY + 30}, 2, fillLineButton ? WHITE : BLACK);
 
     DrawRectangleRoundedLines((Rectangle){
-        5, 5, 30, 30
+        5, anchorY + 5, 30, 30
     }, 0.1f, 3, 1, BLACK);
 
 
     // ---------------------------
-    // Fixed contact enable button
+    // Fixed contact mode button
+    anchorY += 35;
+
     bool fillFixedContactButton = BENCH_benchMode == PLACE_FIXED_CONTACT || IsKeyDown(KEY_ESCAPE);
     DrawRectangleRounded((Rectangle){
-        5, 40, 30, 30
+        5, anchorY + 5, 30, 30
     }, 0.1f, 3, fillFixedContactButton ? BLACK : WHITE);
 
     DrawRectangleLinesEx((Rectangle){
-        10, 45, 20, 20
+        10, anchorY + 10, 20, 20
     }, 2, fillFixedContactButton ? WHITE : BLACK);
 
-    DrawCircle(20, 55, 5, fillFixedContactButton ? WHITE : BLACK);
+    DrawCircle(20, anchorY + 20, 5, fillFixedContactButton ? WHITE : BLACK);
 
     DrawRectangleRoundedLines((Rectangle){
-        5, 40, 30, 30
+        5, anchorY + 5, 30, 30
+    }, 0.1f, 3, 1, BLACK);
+
+    // ---------------------------
+    // Delete mode button
+    anchorY += 35;
+
+    bool fillDeleteButton = BENCH_benchMode == DELETION || IsKeyDown(KEY_ESCAPE);
+    DrawRectangleRounded((Rectangle){
+        5, anchorY + 5, 30, 30
+    }, 0.1f, 3, fillDeleteButton ? BLACK : WHITE);
+
+    DrawLineEx((Vector2){12, anchorY + 15}, (Vector2){15,  anchorY + 30}, 2, fillDeleteButton ? WHITE : BLACK);
+    DrawLineEx((Vector2){28, anchorY + 15}, (Vector2){25,  anchorY + 30}, 2, fillDeleteButton ? WHITE : BLACK);
+    DrawLineEx((Vector2){15, anchorY + 30}, (Vector2){25,  anchorY + 30}, 2, fillDeleteButton ? WHITE : BLACK);
+    DrawLineEx((Vector2){12, anchorY + 15}, (Vector2){28,  anchorY + 15}, 2, fillDeleteButton ? WHITE : BLACK);
+    DrawLineEx((Vector2){12, anchorY + 12}, (Vector2){28,  anchorY + 12}, 2, fillDeleteButton ? WHITE : BLACK);
+
+    DrawRectangleRoundedLines((Rectangle){
+        5, anchorY + 5, 30, 30
     }, 0.1f, 3, 1, BLACK);
 }

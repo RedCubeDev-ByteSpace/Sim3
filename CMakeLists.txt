@@ -2,8 +2,11 @@ cmake_minimum_required(VERSION 4.2)
 project(sim3 C)
 
 set(CMAKE_C_STANDARD 11)
-link_libraries(raylib m json-c)
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -fno-omit-frame-pointer -g")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
+
+link_libraries(raylib m json-c)
 add_executable(sim3 main.c
         GUI/Grid.h
         GUI/Grid.c

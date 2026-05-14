@@ -71,7 +71,7 @@ void SIM_COMP_LIST_grow(sim_comp_list_t *me) {
 
 void SIM_COMP_LIST_shrink(sim_comp_list_t *me) {
     me->length--;
-    if (me->length > me->bufferSize - 5) return; // we good
+    if (me->length >= me->bufferSize - 5) return; // we good
 
     // otherwise: we bad
     me->bufferSize -= 5;

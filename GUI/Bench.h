@@ -15,6 +15,7 @@ typedef enum BENCH_WORKING_MODE {
     MOVING_POINT,
     DRAWING_WIRE,
     PLACE_FIXED_CONTACT,
+    DELETION,
 } bench_working_mode_t;
 
 static Color wireColors[] = {
