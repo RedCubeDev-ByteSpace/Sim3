@@ -22,7 +22,9 @@ void DRAWABLES_WIRE_draw(drw_wire_t *me) {
         return;
     }
 
-    DrawLineEx(LIB_worldSpaceToScreenSpace(me->start), LIB_worldSpaceToScreenSpace(me->end), me->active ? LINE_THICKNESS * 2 : LINE_THICKNESS, me->color);
+    Vector2 start = LIB_worldSpaceToScreenSpace(me->start);
+    Vector2 end = LIB_worldSpaceToScreenSpace(me->end);
+    DrawLineEx(start, end, me->active ? LINE_THICKNESS * 1.5f : LINE_THICKNESS, me->color);
 
     // if (me->active) {
     //     DrawLineEx(LIB_worldSpaceToScreenSpace(me->start), LIB_worldSpaceToScreenSpace(me->end), LINE_THICKNESS * 2, me->color);

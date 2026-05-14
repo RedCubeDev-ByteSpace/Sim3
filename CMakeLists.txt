@@ -41,4 +41,8 @@ add_executable(sim3 main.c
         Sim/SimLists/SimspaceLists.h
         Sim/SimLists/SimspaceLists.c
         GUI/Drawables/WireBranchingPoint.c
-        GUI/Drawables/WireBranchingPoint.h)
+        GUI/Drawables/WireBranchingPoint.h
+        GUI/Drawables/LED.c
+        GUI/Drawables/LED.h
+        Sim/Components/LED.c
+        Sim/Components/LED.h)

@@ -17,6 +17,7 @@ typedef enum DRAWABLE_TYPE {
     DRAWABLE_WIRE_BRANCHING_POINT,
     DRAWABLE_FIXED_CONTACT,
     DRAWABLE_CHIP,
+    DRAWABLE_LED,
 } drawable_type_t;
 
 // ---------------------------------------------------------------------------------------------------------------------

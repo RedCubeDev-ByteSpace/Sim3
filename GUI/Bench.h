@@ -15,6 +15,7 @@ typedef enum BENCH_WORKING_MODE {
     MOVING_POINT,
     DRAWING_WIRE,
     PLACE_FIXED_CONTACT,
+    PLACE_LED,
     DELETION,
 } bench_working_mode_t;
 

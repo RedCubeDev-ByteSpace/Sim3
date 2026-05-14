@@ -22,6 +22,9 @@ sim_connection_t *thisConnection;
 // ---------------------------------------------------------------------------------------------------------------------
 // Data for contact placement mode
 drw_fixed_contact_t *newContact;
+// ---------------------------------------------------------------------------------------------------------------------
+// Data for led placement mode
+drw_led_t *newLED;
 
 void BENCH_init() {
     BENCH_benchMode = IDLE;
@@ -32,6 +35,9 @@ void BENCH_init() {
 
     newContact = malloc(sizeof(drw_fixed_contact_t));
     DRAWABLES_FIXED_CONTACT_init(newContact, (Vector2){0,0}, false);
+
+    newLED = malloc(sizeof(drw_led_t));
+    DRAWABLES_LED_init(newLED, (Vector2){0,0});
 }
 
 void BENCH_process() {
@@ -77,7 +83,7 @@ void BENCH_process() {
         // "Fixed Contact Place" Button
         if (LIB_IsVector2InRectangle(mousePos, (Rectangle){ 5, 35 + 5, 30, 30})) {
 
-            // if we're not currently in wire mode -> go there
+            // if we're not currently in this mode -> go there
             if (BENCH_benchMode != PLACE_FIXED_CONTACT) {
                 BENCH_benchMode = PLACE_FIXED_CONTACT;
             }
@@ -90,10 +96,26 @@ void BENCH_process() {
             return;
         }
 
-        // "Delete" Button
+        // "Place LED" Button
         if (LIB_IsVector2InRectangle(mousePos, (Rectangle){ 5, 2 * 35 + 5, 30, 30})) {
 
-            // if we're not currently in wire mode -> go there
+            // if we're not currently in this mode -> go there
+            if (BENCH_benchMode != PLACE_LED) {
+                BENCH_benchMode = PLACE_LED;
+            }
+
+            // otherwise, if we are: switch to idle
+            else {
+                BENCH_benchMode = IDLE;
+            }
+
+            return;
+        }
+
+        // "Delete" Button
+        if (LIB_IsVector2InRectangle(mousePos, (Rectangle){ 5, 3 * 35 + 5, 30, 30})) {
+
+            // if we're not currently in this mode -> go there
             if (BENCH_benchMode != DELETION) {
                 BENCH_benchMode = DELETION;
             }
@@ -253,6 +275,27 @@ void BENCH_process() {
     }
 
     // -------------------------------------------------------------------------------------------
+    // LED placement mode
+    if (BENCH_benchMode == PLACE_LED) {
+        if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
+
+            // make sure there isnt already a contact at this position
+            for (int i = 0; i < SIMSPACE_lstConnectionPoints->length; ++i) {
+                sim_connection_point_t *conPoint = SIMSPACE_lstConnectionPoints->buffer[i];
+                if (conPoint->position.x == wpos.x && conPoint->position.y == wpos.y) {
+                    // this space is already occupied!!
+                    return;
+                }
+            }
+
+            // create a new fixed contact at this position
+            sim_led_t *led = malloc(sizeof(sim_led_t));
+            SIM_LED_init(led, wpos);
+            SIM_COMP_LIST_appendLED(SIMSPACE_lstLEDs, led);
+        }
+    }
+
+    // -------------------------------------------------------------------------------------------
     // Deletion mode
     if (BENCH_benchMode == DELETION) {
         if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
@@ -285,6 +328,11 @@ void BENCH_process() {
             for (int i = 0; i < lst.length; ++i) {
                 sim_connection_t *con = lst.buffer[i];
 
+                // reset all connected connection points
+                for (int ii = 0; ii < con->lstConnectedPoints.length; ++ii) {
+                    ((sim_connection_point_t*)(con->lstConnectedPoints.buffer[ii]))->attachedWireState = false;
+                }
+
                 SIM_CONNECTION_unload(con);
                 SIM_COMP_LIST_removeConnectionRef(SIMSPACE_lstConnections, con);
                 free(con);
@@ -312,6 +360,27 @@ void BENCH_process() {
             }
 
             SIM_COMP_LIST_clear(&lst);
+
+            // ---------------------------------------------------------------------------------------------------------
+            // have we hit an led?
+            for (int i = 0; i < SIMSPACE_lstLEDs->length; ++i) {
+                sim_led_t *led = SIMSPACE_lstLEDs->buffer[i];
+
+                if (led->point.position.x == wpos.x && led->point.position.y == wpos.y) {
+                    SIM_COMP_LIST_appendLED(&lst, led);
+                }
+            }
+
+            // death
+            for (int i = 0; i < lst.length; ++i) {
+                sim_led_t *led = lst.buffer[i];
+
+                SIM_LED_unload(led);
+                SIM_COMP_LIST_removeLEDRef(SIMSPACE_lstLEDs, led);
+                free(led);
+            }
+
+            SIM_COMP_LIST_clear(&lst);
         }
     }
 }
@@ -333,22 +402,27 @@ void BENCH_draw() {
         case DRAWING_WIRE:
             DrawLineEx((Vector2){wpos.x + cos(rotation) * CURSOR_WIDTH, wpos.y + sin(rotation) * CURSOR_WIDTH}, (Vector2){wpos.x - cos(rotation) * CURSOR_WIDTH, wpos.y - sin(rotation) * CURSOR_WIDTH}, CURSOR_THICKNESS, wireColors[0]);
             DrawLineEx((Vector2){wpos.x + cos(rotation + PI/2) * CURSOR_WIDTH, wpos.y + sin(rotation + PI/2) * CURSOR_WIDTH}, (Vector2){wpos.x - cos(rotation + PI/2) * CURSOR_WIDTH, wpos.y - sin(rotation + PI/2) * CURSOR_WIDTH}, CURSOR_THICKNESS, wireColors[0]);
-        break;
+            break;
 
         case PLACE_FIXED_CONTACT:
             newContact->position = pos;
             DRAWABLES_FIXED_CONTACT_draw(newContact);
-        break;
+            break;
+
+        case PLACE_LED:
+            newLED->position = pos;
+            DRAWABLES_LED_draw(newLED);
+            break;
 
         case DELETION:
             DrawLineEx((Vector2){wpos.x + cos(rotation) * CURSOR_WIDTH, wpos.y + sin(rotation) * CURSOR_WIDTH}, (Vector2){wpos.x - cos(rotation) * CURSOR_WIDTH, wpos.y - sin(rotation) * CURSOR_WIDTH}, CURSOR_THICKNESS, wireColors[0]);
             DrawLineEx((Vector2){wpos.x + cos(-rotation - PI/2) * CURSOR_WIDTH, wpos.y + sin(-rotation - PI/2) * CURSOR_WIDTH}, (Vector2){wpos.x - cos(-rotation - PI/2) * CURSOR_WIDTH, wpos.y - sin(-rotation - PI/2) * CURSOR_WIDTH}, CURSOR_THICKNESS, wireColors[0]);
-        break;
+            break;
 
         default:
             DrawLineEx((Vector2){mousePos.x, mousePos.y - CURSOR_WIDTH}, (Vector2){mousePos.x, mousePos.y + CURSOR_WIDTH}, CURSOR_THICKNESS, wireColors[0]);
             DrawLineEx((Vector2){mousePos.x - CURSOR_WIDTH, mousePos.y}, (Vector2){mousePos.x + CURSOR_WIDTH, mousePos.y}, CURSOR_THICKNESS, wireColors[0]);
-        break;
+            break;
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -391,6 +465,23 @@ void BENCH_draw() {
     }, 2, fillFixedContactButton ? WHITE : BLACK);
 
     DrawCircle(20, anchorY + 20, 5, fillFixedContactButton ? WHITE : BLACK);
+
+    DrawRectangleRoundedLines((Rectangle){
+        5, anchorY + 5, 30, 30
+    }, 0.1f, 3, 1, BLACK);
+
+    // ---------------------------
+    // Fixed contact mode button
+    anchorY += 35;
+
+    bool fillLEDButton = BENCH_benchMode == PLACE_LED || IsKeyDown(KEY_ESCAPE);
+    DrawRectangleRounded((Rectangle){
+        5, anchorY + 5, 30, 30
+    }, 0.1f, 3, fillLEDButton ? BLACK : WHITE);
+
+    DrawCircle(20, anchorY + 20, 8, fillLEDButton ? WHITE : BLACK);
+    DrawCircle(20, anchorY + 20, 8 - LINE_THICKNESS, !fillLEDButton ? WHITE : BLACK);
+    DrawCircle(20, anchorY + 20, 5, fillLEDButton ? WHITE : BLACK);
 
     DrawRectangleRoundedLines((Rectangle){
         5, anchorY + 5, 30, 30

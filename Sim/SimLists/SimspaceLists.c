@@ -152,3 +152,21 @@ void SIM_COMP_LIST_removeChipAt(sim_chip_list_t *me, uint32_t index){
 void SIM_COMP_LIST_removeChipRef(sim_chip_list_t *me, sim_chip_t *comp){
     SIM_COMP_LIST_removeRef(me, comp);
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// LED
+void SIM_COMP_LIST_appendLED(sim_led_list_t *me, sim_led_t *comp) {
+    SIM_COMP_LIST_append(me, comp);
+}
+
+void SIM_COMP_LIST_insertLEDAt(sim_led_list_t *me, sim_led_t *comp, uint32_t index) {
+    SIM_COMP_LIST_insertAt(me, comp, index);
+}
+
+void SIM_COMP_LIST_removeLEDAt(sim_led_list_t *me, uint32_t index) {
+    SIM_COMP_LIST_removeAt(me, index);
+}
+
+void SIM_COMP_LIST_removeLEDRef(sim_led_list_t *me, sim_led_t *comp) {
+    SIM_COMP_LIST_removeRef(me, comp);
+}

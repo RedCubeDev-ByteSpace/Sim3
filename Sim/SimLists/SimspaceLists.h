@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include "../Components/FixedContact.h"
 #include "../Components/Chip.h"
+#include "../Components/LED.h"
 
 // cyclic references
 typedef struct SIM_CONNECTION sim_connection_t;
@@ -24,6 +25,7 @@ typedef sim_comp_list_t sim_connection_list_t;
 typedef sim_comp_list_t sim_fixedcontact_list_t;
 typedef sim_comp_list_t sim_connectionpoint_list_t;
 typedef sim_comp_list_t sim_chip_list_t;
+typedef sim_comp_list_t sim_led_list_t;
 
 // i will never use c++ templates because i hate c++ with a burning passion
 // its a thing of principle
@@ -59,5 +61,11 @@ void SIM_COMP_LIST_appendChip(sim_chip_list_t *me, sim_chip_t *comp);
 void SIM_COMP_LIST_insertChipAt(sim_chip_list_t *me, sim_chip_t *comp, uint32_t index);
 void SIM_COMP_LIST_removeChipAt(sim_chip_list_t *me, uint32_t index);
 void SIM_COMP_LIST_removeChipRef(sim_chip_list_t *me, sim_chip_t *comp);
+
+// LED
+void SIM_COMP_LIST_appendLED(sim_led_list_t *me, sim_led_t *comp);
+void SIM_COMP_LIST_insertLEDAt(sim_led_list_t *me, sim_led_t *comp, uint32_t index);
+void SIM_COMP_LIST_removeLEDAt(sim_led_list_t *me, uint32_t index);
+void SIM_COMP_LIST_removeLEDRef(sim_led_list_t *me, sim_led_t *comp);
 
 #endif //SIM3_SIMSPACELISTS_H

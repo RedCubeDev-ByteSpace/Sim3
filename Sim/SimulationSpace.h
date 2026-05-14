@@ -11,6 +11,7 @@
 extern sim_connection_list_t *SIMSPACE_lstConnections;
 extern sim_connectionpoint_list_t *SIMSPACE_lstConnectionPoints;
 extern sim_fixedcontact_list_t *SIMSPACE_lstFixedContacts;
+extern sim_led_list_t *SIMSPACE_lstLEDs;
 
 void SIMSPACE_init();
 void SIMSPACE_process();

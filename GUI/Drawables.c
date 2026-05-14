@@ -8,6 +8,7 @@
 
 #include "Drawables/Chip.h"
 #include "Drawables/FixedContact.h"
+#include "Drawables/LED.h"
 #include "Drawables/Wire.h"
 #include "Drawables/WireBranchingPoint.h"
 
@@ -66,6 +67,10 @@ void DRAWABLES_drawSingle(drawable_t *drawable) {
 
         case DRAWABLE_CHIP:
             DRAWABLES_CHIP_draw((drw_chip_t*)drawable);
+            break;
+
+        case DRAWABLE_LED:
+            DRAWABLES_LED_draw((drw_led_t*)drawable);
             break;
 
     }
