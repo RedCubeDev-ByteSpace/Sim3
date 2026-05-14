@@ -14,6 +14,7 @@
 // All the things we can draw
 typedef enum DRAWABLE_TYPE {
     DRAWABLE_WIRE,
+    DRAWABLE_WIRE_BRANCHING_POINT,
     DRAWABLE_FIXED_CONTACT,
     DRAWABLE_CHIP,
 } drawable_type_t;

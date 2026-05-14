@@ -9,6 +9,7 @@
 #include "Drawables/Chip.h"
 #include "Drawables/FixedContact.h"
 #include "Drawables/Wire.h"
+#include "Drawables/WireBranchingPoint.h"
 
 
 drawable_t *drawables[MAX_DRAWABLES];
@@ -55,6 +56,10 @@ void DRAWABLES_drawSingle(drawable_t *drawable) {
             DRAWABLES_WIRE_draw((drw_wire_t*)drawable);
             break;
 
+        case DRAWABLE_WIRE_BRANCHING_POINT:
+            DRAWABLES_WIRE_BRANCHING_POINT_draw((drw_wire_branching_point_t*)drawable);
+            break;
+
         case DRAWABLE_FIXED_CONTACT:
             DRAWABLES_FIXED_CONTACT_draw((drw_fixed_contact_t*)drawable);
             break;
@@ -67,10 +72,14 @@ void DRAWABLES_drawSingle(drawable_t *drawable) {
 }
 
 void DRAWABLES_unload(drawable_t *drawable) {
-    switch (drawable->type) {
-        case DRAWABLE_WIRE:
-            drawables[drawable->drawableId] = NULL;
-            free(drawable);
-            break;
-    }
+
+    drawables[drawable->drawableId] = NULL;
+    free(drawable);
+
+    // switch (drawable->type) {
+    //     case DRAWABLE_WIRE:
+    //         drawables[drawable->drawableId] = NULL;
+    //         free(drawable);
+    //         break;
+    // }
 }

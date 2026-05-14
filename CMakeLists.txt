@@ -36,4 +36,6 @@ add_executable(sim3 main.c
         GUI/Drawables/Chip.c
         GUI/Drawables/Chip.h
         Sim/SimLists/SimspaceLists.h
-        Sim/SimLists/SimspaceLists.c)
+        Sim/SimLists/SimspaceLists.c
+        GUI/Drawables/WireBranchingPoint.c
+        GUI/Drawables/WireBranchingPoint.h)

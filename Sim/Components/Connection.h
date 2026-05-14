@@ -18,6 +18,13 @@ typedef struct SIM_VECTOR_PAIR {
     Vector2 to;
 } sim_vector_pair_t;
 
+typedef struct SIM_VECTOR_RECORD {
+    Vector2 vec;
+    int amount;
+} sim_vector_record_t;
+
+void SIM_VECTOR_RECORD_registerVector(sim_vector_record_t *records, Vector2 vec, int maxNum);
+
 // ---------------------------------------------------------------------------------------------------------------------
 // A dynamic list of vector pairs making up a connection
 typedef struct SIM_CONNECTION_VECTOR_PAIR_LIST {
