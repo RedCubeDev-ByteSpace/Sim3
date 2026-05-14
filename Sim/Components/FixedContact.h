@@ -11,7 +11,7 @@
 
 typedef struct SIM_FIXED_CONTACT {
 
-    sim_connection_point_t *point;
+    sim_connection_point_t point;
     drw_fixed_contact_t *contact;
 
 } sim_fixed_contact_t;

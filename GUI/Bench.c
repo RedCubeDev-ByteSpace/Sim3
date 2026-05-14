@@ -20,7 +20,7 @@ Vector2 attachmentVertex;
 bool hasAttachmentVertex;
 sim_connection_t *thisConnection;
 // ---------------------------------------------------------------------------------------------------------------------
-// Data for contact placment mode
+// Data for contact placement mode
 drw_fixed_contact_t *newContact;
 
 void BENCH_init() {
@@ -56,8 +56,13 @@ void BENCH_process() {
             // if we're not currently in wire mode -> go there
             if (BENCH_benchMode != DRAWING_WIRE) {
                 BENCH_benchMode = DRAWING_WIRE;
-                thisConnection = NULL;
+
                 hasAttachmentVertex = false;
+
+                if (thisConnection != NULL && thisConnection->lstConnectedPoints.length == 0) {
+                    SIM_CONNECTION_unload(thisConnection);
+                }
+                thisConnection = NULL;
             }
 
             // otherwise, if we are: switch to idle
@@ -98,12 +103,12 @@ void BENCH_process() {
                 if (LIB_IsVector2InRectangle(mousePos, DRAWABLES_FIXED_CONTACT_getInteractionRect(contact->contact))) {
 
                     // flippificate it!!!
-                    sim_connection_point_state_t state = contact->point->state;
+                    sim_connection_point_state_t state = contact->point.state;
 
                     if (state == CONNECTION_POINT_HIGH)
-                        contact->point->state = CONNECTION_POINT_LOW;
+                        contact->point.state = CONNECTION_POINT_LOW;
                     else
-                        contact->point->state = CONNECTION_POINT_HIGH;
+                        contact->point.state = CONNECTION_POINT_HIGH;
 
                     // refresh please :3
                     SIM_FIXED_CONTACT_refreshDrawable(contact);
@@ -120,47 +125,34 @@ void BENCH_process() {
             if (thisConnection == NULL) {
 
                 // no connection yet
-                // are we trying to continue a connection by clicking on its last vertex?
+                // are we trying to attach to an existing connection?
                 for (int i = 0; i < SIMSPACE_lstConnections->length; ++i) {
                     sim_connection_t *con = SIMSPACE_lstConnections->buffer[i];
-                    if (con->lstConnectionPoints.length < 2) continue;
+                    if (con->lstVectorPairs.length == 0) continue;
 
-                    // have we clicked on the first vertex of this connection?
-                    Vector2 first = con->lstConnectionPoints.buffer[0];
-                    if (first.x == wpos.x && first.y == wpos.y) {
+                    for (int ii = 0; ii < con->lstVectorPairs.length; ++ii) {
+                        Vector2 from = con->lstVectorPairs.buffer[ii].from;
+                        Vector2 to = con->lstVectorPairs.buffer[ii].to;
 
-                        // is it connected to a connection point? in that case it cannot be extended
-                        if (con->pointA != NULL) return;
+                        if (from.x == wpos.x && from.y == wpos.y) {
+                            attachmentVertex = from;
+                            hasAttachmentVertex = true;
+                            thisConnection = con;
+                            return;
+                        }
 
-                        // if so, select it
-                        thisConnection = con;
-                        attachmentVertex = first;
-                        hasAttachmentVertex = true;
-                        return;
-                    }
-
-                    // have we clicked on the last vertex of this connection?
-                    Vector2 last = con->lstConnectionPoints.buffer[con->lstConnectionPoints.length-1];
-                    if (last.x == wpos.x && last.y == wpos.y) {
-
-                        // is it connected to a connection point? in that case it cannot be extended
-                        if (con->pointB != NULL) return;
-
-                        // if so, select it
-                        thisConnection = con;
-                        attachmentVertex = last;
-                        hasAttachmentVertex = true;
-                        return;
+                        if (to.x == wpos.x && to.y == wpos.y) {
+                            attachmentVertex = to;
+                            hasAttachmentVertex = true;
+                            thisConnection = con;
+                            return;
+                        }
                     }
                 }
 
                 // if we didnt find any existing connection -> create a new one
                 thisConnection = malloc(sizeof(sim_connection_t));
                 SIM_CONNECTION_init(thisConnection, wireColors[0]);
-                SIM_COMP_LIST_appendConnection(SIMSPACE_lstConnections, thisConnection);
-
-                // add this vertex to it
-                SIM_CONNECTION_POINT_LIST_append(&thisConnection->lstConnectionPoints, wpos);
 
                 // use it as attachment
                 attachmentVertex = wpos;
@@ -170,7 +162,8 @@ void BENCH_process() {
                 for (int i = 0; i < SIMSPACE_lstConnectionPoints->length; ++i) {
                     sim_connection_point_t *conPoint = SIMSPACE_lstConnectionPoints->buffer[i];
                     if (conPoint->position.x == wpos.x && conPoint->position.y == wpos.y) {
-                        thisConnection->pointA = conPoint;
+
+                        SIM_COMP_LIST_appendConnectionPoint(&thisConnection->lstConnectedPoints, conPoint);
                         break;
                     }
                 }
@@ -182,6 +175,8 @@ void BENCH_process() {
         // if this is already part of a connection -> expand it
         if ((IsMouseButtonReleased(MOUSE_BUTTON_LEFT) || IsMouseButtonReleased(MOUSE_BUTTON_RIGHT)) && thisConnection != NULL) {
 
+            if (attachmentVertex.x == wpos.x && attachmentVertex.y == wpos.y) return; // bro this doesnt count
+
             // have we hit any connection points?
             sim_connection_point_t *conPoint = NULL;
             for (int i = 0; i < SIMSPACE_lstConnectionPoints->length; ++i) {
@@ -192,28 +187,15 @@ void BENCH_process() {
                 }
             }
 
-            // if the connection only has one point so far -> just append this one
-            if (thisConnection->lstConnectionPoints.length == 1) {
-                SIM_CONNECTION_POINT_LIST_append(&thisConnection->lstConnectionPoints, wpos);
-                thisConnection->pointB = conPoint;
+            // if this is a brand new connection -> add it to the simulation space!
+            if (thisConnection->lstVectorPairs.length == 0) {
+                SIM_COMP_LIST_appendConnection(SIMSPACE_lstConnections, thisConnection);
             }
 
-            // alright alright
-            // we already have some vertices so we need to figure out if this goes in the front or the back of the wire
-            else {
-                // is the attachment vertex the first one in the list?
-                Vector2 first = thisConnection->lstConnectionPoints.buffer[0];
-                if (first.x == attachmentVertex.x && first.y == attachmentVertex.y) {
-
-                    // add it in position 0
-                    SIM_CONNECTION_POINT_LIST_insertAt(&thisConnection->lstConnectionPoints, wpos, 0);
-                    thisConnection->pointA = conPoint;
-                }
-                else {
-                    // otherwise add it at the last position
-                    SIM_CONNECTION_POINT_LIST_append(&thisConnection->lstConnectionPoints, wpos);
-                    thisConnection->pointB = conPoint;
-                }
+            // append a new vector pair!
+            SIM_CONNECTION_VECTOR_PAIR_LIST_append(&thisConnection->lstVectorPairs, (sim_vector_pair_t){attachmentVertex, wpos});
+            if (conPoint != NULL) {
+                SIM_COMP_LIST_appendConnectionPoint(&thisConnection->lstConnectedPoints, conPoint);
             }
 
             // rebuild and redraw

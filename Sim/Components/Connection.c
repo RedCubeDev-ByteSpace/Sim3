@@ -7,89 +7,69 @@
 #include <stdlib.h>
 
 void SIM_CONNECTION_init(sim_connection_t *me, Color wireColor) {
-    me->pointA = NULL;
-    me->pointB = NULL;
 
+    SIM_COMP_LIST_init(&me->lstConnectedPoints);
     SIM_CONNECTION_DRAWABLE_LIST_init(&me->lstDrawables);
-    SIM_CONNECTION_POINT_LIST_init(&me->lstConnectionPoints);
+    SIM_CONNECTION_VECTOR_PAIR_LIST_init(&me->lstVectorPairs);
 
     me->color = wireColor;
 }
 
+void SIM_CONNECTION_unload(sim_connection_t *me) {
+    SIM_COMP_LIST_clear(&me->lstConnectedPoints);
+    SIM_CONNECTION_DRAWABLE_LIST_clear(&me->lstDrawables);
+    SIM_CONNECTION_VECTOR_PAIR_LIST_clear(&me->lstVectorPairs);
+    free(me);
+}
+
 void SIM_CONNECTION_refreshState(sim_connection_t *me) {
 
-    // if both points are null (nothing connected on either side) -> not active
-    if (me->pointA == NULL && me->pointB == NULL) {
+    // count the states of all the connected points
+    int numPointsFloating = 0;
+    int numPointsHigh = 0;
+    int numPointsLow = 0;
+
+    for (int i = 0; i < me->lstConnectedPoints.length; ++i) {
+        sim_connection_point_t *point = me->lstConnectedPoints.buffer[i];
+        if (point->state == CONNECTION_POINT_FLOATING) numPointsFloating++;
+        if (point->state == CONNECTION_POINT_HIGH) numPointsHigh++;
+        if (point->state == CONNECTION_POINT_LOW) numPointsLow++;
+    }
+
+    // nothin
+    if (numPointsFloating == 0 && numPointsHigh == 0 && numPointsLow == 0) {
         me->active = false;
         me->error = false;
     }
 
-    // if only A or only B is connected
-    else if (me->pointA == NULL || me->pointB == NULL) {
-
-        // select the point thats connected
-        sim_connection_point_t *point = me->pointA;
-        if (point == NULL) point = me->pointB;
-
+    // if one or more is high and none are low -> the line is high
+    else if (numPointsHigh > 0 && numPointsLow == 0) {
+        me->active = true;
         me->error = false;
+    }
 
-        // use its state
-        if (point->state == CONNECTION_POINT_DISCONNECTED || point->state == CONNECTION_POINT_FLOATING ||
-            point->state == CONNECTION_POINT_LOW) {
+    // if one or more is low and none are high -> the line is low
+    else if (numPointsHigh == 0 && numPointsLow > 0) {
+        me->active = false;
+        me->error = false;
+    }
 
-            me->active = false;
-        }
-        else {
+    // if there are points that are low and points that are high -> this is a dead short! bad!!
+    else if (numPointsHigh > 0 && numPointsLow > 0) {
+        me->active = false;
+        me->error = true;
+    }
 
-            me->active = true;
-        }
+    // if all connection points are floating (probably because theyre inputs) -> this is also bad! it should be grounded
+    else if (numPointsFloating == me->lstConnectedPoints.length) {
+        me->active = false;
+        me->error = true;
+    }
 
-    // if both sides are connected -> figure this shit out
-    } else {
-
-        // both sides floating
-        if ((me->pointA->state == CONNECTION_POINT_DISCONNECTED || me->pointA->state == CONNECTION_POINT_FLOATING)
-            &&
-            (me->pointB->state == CONNECTION_POINT_DISCONNECTED || me->pointB->state == CONNECTION_POINT_FLOATING)) {
-
-            me->active = false;
-            me->error = true; // this is not good, probably two inputs connected together
-        }
-
-        // A side floating
-        else if ((me->pointA->state == CONNECTION_POINT_DISCONNECTED || me->pointA->state == CONNECTION_POINT_FLOATING)
-            &&
-            (me->pointB->state == CONNECTION_POINT_HIGH || me->pointB->state == CONNECTION_POINT_LOW)) {
-
-            me->active = me->pointB->state == CONNECTION_POINT_HIGH;
-            me->error = false;
-        }
-
-        // B side floating
-        else if ((me->pointB->state == CONNECTION_POINT_DISCONNECTED || me->pointB->state == CONNECTION_POINT_FLOATING)
-            &&
-            (me->pointA->state == CONNECTION_POINT_HIGH || me->pointA->state == CONNECTION_POINT_LOW)) {
-
-            me->active = me->pointA->state == CONNECTION_POINT_HIGH;
-            me->error = false;
-        }
-
-        // neither side floating -> this shit is getting a little more involved
-        else {
-
-            // if both sides are high or both sides are low -> use that state
-            if (me->pointA->state == me->pointB->state) {
-                me->active = me->pointA->state == CONNECTION_POINT_HIGH;
-                me->error = false;
-            }
-
-            // if one side is high and the other is low -> dead short! this is bad!
-            else {
-                me->active = false;
-                me->error = true;
-            }
-
-        }
+    // distribute the new wire state to all points so they can act upon it
+    for (int i = 0; i < me->lstConnectedPoints.length; ++i) {
+        sim_connection_point_t *point = me->lstConnectedPoints.buffer[i];
+        point->attachedWireState = me->active;
     }
 
     // distribute the new state to the wires
@@ -112,10 +92,10 @@ void SIM_CONNECTION_refreshDrawablesStructure(sim_connection_t *me) {
     SIM_CONNECTION_clearDrawables(me);
 
     // and then build it again
-    for (int i = 0; i < me->lstConnectionPoints.length-1; ++i) {
+    for (int i = 0; i < me->lstVectorPairs.length; ++i) {
         // create a new wire
         drw_wire_t *newWire = malloc(sizeof(drw_wire_t));
-        DRAWABLES_WIRE_init(newWire, me->lstConnectionPoints.buffer[i], me->lstConnectionPoints.buffer[i + 1], me->color);
+        DRAWABLES_WIRE_init(newWire, me->lstVectorPairs.buffer[i].from, me->lstVectorPairs.buffer[i].to, me->color);
         DRAWABLES_enqueue((drawable_t*)newWire);
         SIM_CONNECTION_DRAWABLE_LIST_add(&me->lstDrawables, (drawable_t*)newWire);
     }

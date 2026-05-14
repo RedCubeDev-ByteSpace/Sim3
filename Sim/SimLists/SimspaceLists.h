@@ -5,9 +5,11 @@
 #ifndef SIM3_SIMSPACELISTS_H
 #define SIM3_SIMSPACELISTS_H
 #include <stdint.h>
-#include "../Components/Connection.h"
 #include "../Components/FixedContact.h"
 #include "../Components/Chip.h"
+
+// cyclic references
+typedef struct SIM_CONNECTION sim_connection_t;
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Dynamic list for all kinds of nonsense
@@ -32,6 +34,7 @@ void SIM_COMP_LIST_removeAt(sim_comp_list_t *me, uint32_t index);
 void SIM_COMP_LIST_removeRef(sim_comp_list_t *me, void *comp);
 void SIM_COMP_LIST_grow(sim_comp_list_t *me);
 void SIM_COMP_LIST_shrink(sim_comp_list_t *me);
+void SIM_COMP_LIST_clear(sim_comp_list_t *me);
 
 // CONNECTIONS
 void SIM_COMP_LIST_appendConnection(sim_connection_list_t *me, sim_connection_t *comp);

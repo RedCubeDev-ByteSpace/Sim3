@@ -86,6 +86,13 @@ void SIM_COMP_LIST_shrink(sim_comp_list_t *me) {
     me->buffer = newBuffer;
 }
 
+void SIM_COMP_LIST_clear(sim_comp_list_t *me) {
+    free(me->buffer);
+    me->buffer = NULL;
+    me->bufferSize = 0;
+    me->length = 0;
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 // CONNECTIONS
 void SIM_COMP_LIST_appendConnection(sim_connection_list_t *me, sim_connection_t *comp) {

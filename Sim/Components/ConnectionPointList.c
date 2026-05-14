@@ -7,40 +7,56 @@
 
 #include "Connection.h"
 
-void SIM_CONNECTION_POINT_LIST_init(sim_connection_point_list_t *me) {
+void SIM_CONNECTION_VECTOR_PAIR_LIST_init(sim_connection_vector_pair_list_t *me) {
     me->buffer = NULL;
     me->bufferSize = 0;
     me->length = 0;
 }
 
-void SIM_CONNECTION_POINT_LIST_append(sim_connection_point_list_t *me, Vector2 newPoint) {
+void SIM_CONNECTION_VECTOR_PAIR_LIST_append(sim_connection_vector_pair_list_t *me, sim_vector_pair_t newPair) {
 
-    // make sure this point isnt the same as the previous one, because that would be stupid
-    if (me->length > 0) {
-        Vector2 oldPoint = me->buffer[me->length - 1];
-        if (oldPoint.x == newPoint.x && oldPoint.y == newPoint.y) {
-            return; // this point is redundant
+    // make sure this pair doesnt already exist because what
+    for (int i = 0; i < me->length; ++i) {
+        if (me->buffer[i].from.x == newPair.from.x && me->buffer[i].from.y == newPair.from.y
+            &&
+            me->buffer[i].to.x == newPair.to.x && me->buffer[i].to.y == newPair.to.y) {
+            return;
+        }
+
+        // also check the reverse
+        if (me->buffer[i].from.x == newPair.to.x && me->buffer[i].from.y == newPair.to.y
+            &&
+            me->buffer[i].to.x == newPair.from.x && me->buffer[i].to.y == newPair.from.y) {
+            return;
         }
     }
 
     // grow the list and add this point
-    SIM_CONNECTION_POINT_LIST_grow(me);
-    me->buffer[me->length-1] = newPoint;
+    SIM_CONNECTION_VECTOR_PAIR_LIST_grow(me);
+    me->buffer[me->length-1] = newPair;
 }
 
-void SIM_CONNECTION_POINT_LIST_insertAt(sim_connection_point_list_t *me, Vector2 newPoint, uint32_t index) {
+void SIM_CONNECTION_VECTOR_PAIR_insertAt(sim_connection_vector_pair_list_t *me, sim_vector_pair_t newPair, uint32_t index) {
     if (index >= me->length) return; // huh? what? what are you even trying to do?
 
-    // make sure this point isnt the same as the previous one, because that would be stupid
-    if (index > 0) {
-        Vector2 oldPoint = me->buffer[index - 1];
-        if (oldPoint.x == newPoint.x && oldPoint.y == newPoint.y) {
-            return; // this point is redundant
-        }
+    // make sure this pair doesnt already exist because what
+    for (int i = 0; i < me->length; ++i) {
+        if (me->buffer[i].from.x == newPair.from.x && me->buffer[i].from.y == newPair.from.y
+            &&
+            me->buffer[i].to.x == newPair.to.x && me->buffer[i].to.y == newPair.to.y) {
+            return;
+            }
+
+        // also check the reverse
+        if (me->buffer[i].from.x == newPair.to.x && me->buffer[i].from.y == newPair.to.y
+            &&
+            me->buffer[i].to.x == newPair.from.x && me->buffer[i].to.y == newPair.from.y) {
+            return;
+            }
     }
 
     // grow the list
-    SIM_CONNECTION_POINT_LIST_grow(me);
+    SIM_CONNECTION_VECTOR_PAIR_LIST_grow(me);
 
     // move everything after it back
     for (uint32_t i = me->length-1; i > index; i--) {
@@ -48,13 +64,10 @@ void SIM_CONNECTION_POINT_LIST_insertAt(sim_connection_point_list_t *me, Vector2
     }
 
     // slot it in
-    me->buffer[index] = newPoint;
-}
-void SIM_CONNECTION_POINT_LIST_insertAfter(sim_connection_point_list_t *me, Vector2 oldPoint, Vector2 newPoint) {
-    // no idea if ill actually ever need this
+    me->buffer[index] = newPair;
 }
 
-void SIM_CONNECTION_POINT_LIST_removeAt(sim_connection_point_list_t *me, uint32_t index) {
+void SIM_CONNECTION_VECTOR_PAIR_LIST_removeAt(sim_connection_vector_pair_list_t *me, uint32_t index) {
     if (index >= me->length) return; // nah bruv
 
     // move everything after the index back
@@ -63,27 +76,46 @@ void SIM_CONNECTION_POINT_LIST_removeAt(sim_connection_point_list_t *me, uint32_
     }
 
     // shrinkificate
-    SIM_CONNECTION_POINT_LIST_shrink(me);
+    SIM_CONNECTION_VECTOR_PAIR_LIST_shrink(me);
 }
 
-void SIM_CONNECTION_POINT_LIST_remove(sim_connection_point_list_t *me, Vector2 oldPoint) {
-    // no idea if ill actually ever need this
+void SIM_CONNECTION_VECTOR_PAIR_LIST_remove(sim_connection_vector_pair_list_t *me, sim_vector_pair_t oldPair) {
+
+    // look for this pair and / or its reverse
+    for (int i = 0; i < me->length; ++i) {
+        if (me->buffer[i].from.x == oldPair.from.x && me->buffer[i].from.y == oldPair.from.y
+            &&
+            me->buffer[i].to.x == oldPair.to.x && me->buffer[i].to.y == oldPair.to.y) {
+
+            SIM_CONNECTION_VECTOR_PAIR_LIST_removeAt(me, i);
+            return;
+        }
+
+        // also check the reverse
+        if (me->buffer[i].from.x == oldPair.to.x && me->buffer[i].from.y == oldPair.to.y
+            &&
+            me->buffer[i].to.x == oldPair.from.x && me->buffer[i].to.y == oldPair.from.y) {
+
+            SIM_CONNECTION_VECTOR_PAIR_LIST_removeAt(me, i);
+            return;
+        }
+    }
 }
 
-void SIM_CONNECTION_POINT_LIST_clear(sim_connection_point_list_t *me) {
+void SIM_CONNECTION_VECTOR_PAIR_LIST_clear(sim_connection_vector_pair_list_t *me) {
     me->length = 0;
     me->bufferSize = 0;
     free(me->buffer);
     me->buffer = NULL;
 }
 
-void SIM_CONNECTION_POINT_LIST_grow(sim_connection_point_list_t *me) {
+void SIM_CONNECTION_VECTOR_PAIR_LIST_grow(sim_connection_vector_pair_list_t *me) {
     me->length++;
     if (me->length < me->bufferSize) return; // nothing to do, theres still room
 
     // otherwise: grow the bih
     me->bufferSize += 5;
-    Vector2 *newBuffer = realloc(me->buffer, me->bufferSize * sizeof(Vector2));
+    sim_vector_pair_t *newBuffer = realloc(me->buffer, me->bufferSize * sizeof(sim_vector_pair_t));
 
     if (newBuffer == NULL) {
         printf("Cannot grow point buffer!!! this will go badly\n");
@@ -94,13 +126,13 @@ void SIM_CONNECTION_POINT_LIST_grow(sim_connection_point_list_t *me) {
     me->buffer = newBuffer;
 }
 
-void SIM_CONNECTION_POINT_LIST_shrink(sim_connection_point_list_t *me) {
+void SIM_CONNECTION_VECTOR_PAIR_LIST_shrink(sim_connection_vector_pair_list_t *me) {
     me->length--;
     if (me->length > me->bufferSize - 5) return; // nothing to shrink yet
 
     // otherwise: shrinkificate
     me->bufferSize -= 5;
-    Vector2 *newBuffer = realloc(me->buffer, me->bufferSize * sizeof(Vector2));
+    sim_vector_pair_t *newBuffer = realloc(me->buffer, me->bufferSize * sizeof(sim_vector_pair_t));
 
     if (newBuffer == NULL) {
         printf("Cannot shrink point buffer!!! this will go badly\n");
