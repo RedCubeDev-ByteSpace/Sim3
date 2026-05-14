@@ -6,8 +6,8 @@
 #define SIM3_GUI_H
 #include "raylib.h"
 
-#define WINDOW_WIDTH 1000
-#define WINDOW_HEIGHT 1000
+#define INITIAL_WINDOW_WIDTH 800
+#define INITIAL_WINDOW_HEIGHT 600
 
 #define TARGET_FPS 60
 
@@ -22,5 +22,6 @@ float LIB_lerp(float a, float b, float f);
 Vector2 LIB_worldSpaceToScreenSpace(Vector2 worldSpace);
 Vector2 LIB_screenSpaceToWorldSpace(Vector2 screenSpace);
 bool LIB_IsVector2InRectangle(Vector2 pos, Rectangle rect);
+Vector2 LIB_roundificateToWholePoint(Vector2 pos);
 
 #endif //SIM3_GUI_H

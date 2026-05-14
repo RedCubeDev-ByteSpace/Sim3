@@ -7,6 +7,8 @@
 #include "raylib.h"
 
 #define NUM_COLORS 10
+#define CURSOR_WIDTH 10
+#define CURSOR_THICKNESS 1.5f
 
 typedef enum BENCH_WORKING_MODE {
     IDLE,

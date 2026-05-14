@@ -18,4 +18,6 @@ typedef struct SIM_CHIP_SPECIFICATION {
 
 } sim_chip_specification_t;
 
+typedef struct SIM_CHIP sim_chip_t;
+
 #endif //SIM3_CHIP_H

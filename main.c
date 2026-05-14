@@ -9,12 +9,13 @@
 #include "Sim/SimulationSpace.h"
 
 int main(void) {
-    printf("Hello, World!\n");
+    printf("HELLORLD!\n");
 
     // start raylib window
     SetConfigFlags(FLAG_MSAA_4X_HINT);
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-    InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "sim3");
+    InitWindow(INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT, "sim3");
+    SetExitKey(KEY_NULL);
     SetTargetFPS(TARGET_FPS);
 
     // Initialize everything
@@ -28,6 +29,9 @@ int main(void) {
 
     // main draw loop
     while (!WindowShouldClose()) {
+
+        // hihi, haha, window size
+        GUI_WindowSize = (Vector2){ GetScreenWidth(), GetScreenHeight() };
 
         // -------------------------------------------------------------------------------------------------------------
         // Process all events
@@ -53,5 +57,6 @@ int main(void) {
     // kill the bih
     CloseWindow();
 
+    // the lion does not concern himself with freeing memory
     return 0;
 }

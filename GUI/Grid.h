@@ -11,6 +11,8 @@
 void GRID_init();
 void GRID_draw();
 
+extern Vector2 GUI_WindowSize;
+
 extern float GRID_zoom;
 extern Vector2 GRID_cameraPos;
 extern Vector2 GRID_cameraOffset;

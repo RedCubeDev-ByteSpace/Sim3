@@ -38,10 +38,16 @@ void BENCH_process() {
     Vector2 mousePos = GetMousePosition();
     Vector2 pos = LIB_screenSpaceToWorldSpace(mousePos);
     Vector2 wpos;
-    wpos.x = (int)(pos.x + 0.5f);
-    wpos.y = (int)(pos.y + 0.5f);
+    wpos = LIB_roundificateToWholePoint(pos);
 
-    // buttons
+    // -----------------------------------------------------------------------------------------------------------------
+    // ESC shortcut to exit out of all modes
+    if (IsKeyReleased(KEY_ESCAPE)) {
+        BENCH_benchMode = IDLE;
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // Mode selection buttons
     if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
 
         // "Wire Mode" Button
@@ -51,6 +57,7 @@ void BENCH_process() {
             if (BENCH_benchMode != DRAWING_WIRE) {
                 BENCH_benchMode = DRAWING_WIRE;
                 thisConnection = NULL;
+                hasAttachmentVertex = false;
             }
 
             // otherwise, if we are: switch to idle
@@ -84,18 +91,22 @@ void BENCH_process() {
         if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
 
             // Flip any fixed contacts when theyre clicked on
-            for (int i = 0; i < MAX_CONNECTIONS; ++i) {
-                if (SIMSPACE_fixedContacts[i] == NULL) continue;
+            for (int i = 0; i < SIMSPACE_lstFixedContacts->length; ++i) {
+                sim_fixed_contact_t *contact = SIMSPACE_lstFixedContacts->buffer[i];
 
-                if (LIB_IsVector2InRectangle(mousePos, DRAWABLES_FIXED_CONTACT_getInteractionRect(SIMSPACE_fixedContacts[i]->contact))) {
-                    sim_connection_point_state_t state = SIMSPACE_fixedContacts[i]->point->state;
+                // did the mouse hit the interaction rect of this contact?
+                if (LIB_IsVector2InRectangle(mousePos, DRAWABLES_FIXED_CONTACT_getInteractionRect(contact->contact))) {
+
+                    // flippificate it!!!
+                    sim_connection_point_state_t state = contact->point->state;
 
                     if (state == CONNECTION_POINT_HIGH)
-                        SIMSPACE_fixedContacts[i]->point->state = CONNECTION_POINT_LOW;
+                        contact->point->state = CONNECTION_POINT_LOW;
                     else
-                        SIMSPACE_fixedContacts[i]->point->state = CONNECTION_POINT_HIGH;
+                        contact->point->state = CONNECTION_POINT_HIGH;
 
-                    SIM_FIXED_CONTACT_refreshDrawable(SIMSPACE_fixedContacts[i]);
+                    // refresh please :3
+                    SIM_FIXED_CONTACT_refreshDrawable(contact);
                 }
             }
         }
@@ -110,33 +121,33 @@ void BENCH_process() {
 
                 // no connection yet
                 // are we trying to continue a connection by clicking on its last vertex?
-                for (int i = 0; i < MAX_CONNECTIONS; ++i) {
-                    if (SIMSPACE_connections[i] == NULL) continue;
-                    if (SIMSPACE_connections[i]->lstConnectionPoints.length < 2) continue;
+                for (int i = 0; i < SIMSPACE_lstConnections->length; ++i) {
+                    sim_connection_t *con = SIMSPACE_lstConnections->buffer[i];
+                    if (con->lstConnectionPoints.length < 2) continue;
 
                     // have we clicked on the first vertex of this connection?
-                    Vector2 first = SIMSPACE_connections[i]->lstConnectionPoints.buffer[0];
+                    Vector2 first = con->lstConnectionPoints.buffer[0];
                     if (first.x == wpos.x && first.y == wpos.y) {
 
                         // is it connected to a connection point? in that case it cannot be extended
-                        if (SIMSPACE_connections[i]->pointA != NULL) return;
+                        if (con->pointA != NULL) return;
 
                         // if so, select it
-                        thisConnection = SIMSPACE_connections[i];
+                        thisConnection = con;
                         attachmentVertex = first;
                         hasAttachmentVertex = true;
                         return;
                     }
 
                     // have we clicked on the last vertex of this connection?
-                    Vector2 last = SIMSPACE_connections[i]->lstConnectionPoints.buffer[SIMSPACE_connections[i]->lstConnectionPoints.length-1];
+                    Vector2 last = con->lstConnectionPoints.buffer[con->lstConnectionPoints.length-1];
                     if (last.x == wpos.x && last.y == wpos.y) {
 
                         // is it connected to a connection point? in that case it cannot be extended
-                        if (SIMSPACE_connections[i]->pointB != NULL) return;
+                        if (con->pointB != NULL) return;
 
                         // if so, select it
-                        thisConnection = SIMSPACE_connections[i];
+                        thisConnection = con;
                         attachmentVertex = last;
                         hasAttachmentVertex = true;
                         return;
@@ -146,7 +157,7 @@ void BENCH_process() {
                 // if we didnt find any existing connection -> create a new one
                 thisConnection = malloc(sizeof(sim_connection_t));
                 SIM_CONNECTION_init(thisConnection, wireColors[0]);
-                SIMSPACE_addConnection(thisConnection);
+                SIM_COMP_LIST_appendConnection(SIMSPACE_lstConnections, thisConnection);
 
                 // add this vertex to it
                 SIM_CONNECTION_POINT_LIST_append(&thisConnection->lstConnectionPoints, wpos);
@@ -156,10 +167,10 @@ void BENCH_process() {
                 hasAttachmentVertex = true;
 
                 // is it attached to any connection points??
-                for (int i = 0; i < MAX_CONNECTIONS; ++i) {
-                    if (SIMSPACE_connectionPoints[i] == NULL) continue;
-                    if (SIMSPACE_connectionPoints[i]->position.x == wpos.x && SIMSPACE_connectionPoints[i]->position.y == wpos.y) {
-                        thisConnection->pointA = SIMSPACE_connectionPoints[i];
+                for (int i = 0; i < SIMSPACE_lstConnectionPoints->length; ++i) {
+                    sim_connection_point_t *conPoint = SIMSPACE_lstConnectionPoints->buffer[i];
+                    if (conPoint->position.x == wpos.x && conPoint->position.y == wpos.y) {
+                        thisConnection->pointA = conPoint;
                         break;
                     }
                 }
@@ -173,10 +184,10 @@ void BENCH_process() {
 
             // have we hit any connection points?
             sim_connection_point_t *conPoint = NULL;
-            for (int i = 0; i < MAX_CONNECTIONS; ++i) {
-                if (SIMSPACE_connectionPoints[i] == NULL) continue;
-                if (SIMSPACE_connectionPoints[i]->position.x == wpos.x && SIMSPACE_connectionPoints[i]->position.y == wpos.y) {
-                    conPoint = SIMSPACE_connectionPoints[i];
+            for (int i = 0; i < SIMSPACE_lstConnectionPoints->length; ++i) {
+                sim_connection_point_t *_conPoint = SIMSPACE_lstConnectionPoints->buffer[i];
+                if (_conPoint->position.x == wpos.x && _conPoint->position.y == wpos.y) {
+                    conPoint = _conPoint;
                     break;
                 }
             }
@@ -212,10 +223,11 @@ void BENCH_process() {
             if (IsMouseButtonReleased(MOUSE_BUTTON_RIGHT) && conPoint == NULL) {
                 attachmentVertex = wpos;
             }
-            // otherwise: exit out of wire drawing mode
+            // otherwise: just finish this wire
             else {
                 hasAttachmentVertex = false;
-                BENCH_benchMode = IDLE;
+                thisConnection = NULL;
+                //BENCH_benchMode = IDLE;
             }
         }
     }
@@ -226,9 +238,9 @@ void BENCH_process() {
         if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
 
             // make sure there isnt already a contact at this position
-            for (int i = 0; i < MAX_CONNECTIONS; ++i) {
-                if (SIMSPACE_connectionPoints[i] == NULL) continue;
-                if (SIMSPACE_connectionPoints[i]->position.x == wpos.x && SIMSPACE_connectionPoints[i]->position.y == wpos.y) {
+            for (int i = 0; i < SIMSPACE_lstConnectionPoints->length; ++i) {
+                sim_connection_point_t *conPoint = SIMSPACE_lstConnectionPoints->buffer[i];
+                if (conPoint->position.x == wpos.x && conPoint->position.y == wpos.y) {
                     // this space is already occupied!!
                     return;
                 }
@@ -237,7 +249,7 @@ void BENCH_process() {
             // create a new fixed contact at this position
             sim_fixed_contact_t *contact = malloc(sizeof(sim_fixed_contact_t));
             SIM_FIXED_CONTACT_init(contact, wpos, false);
-            SIMSPACE_addFixedContact(contact);
+            SIM_COMP_LIST_appendFixedContact(SIMSPACE_lstFixedContacts, contact);
         }
     }
 }
@@ -249,17 +261,16 @@ void BENCH_draw() {
 
     Vector2 mousePos = GetMousePosition();
     Vector2 pos = LIB_screenSpaceToWorldSpace(mousePos);
-    pos.x = (int)(pos.x + 0.5f);
-    pos.y = (int)(pos.y + 0.5f);
+    pos = LIB_roundificateToWholePoint(pos);
 
-    // ----------------------------
+    // -----------------------------------------------------------------------------------------------------------------
     // Draw Cursors
 
     Vector2 wpos = LIB_worldSpaceToScreenSpace(pos);
     switch (BENCH_benchMode) {
         case DRAWING_WIRE:
-            DrawLineEx((Vector2){wpos.x + cos(rotation) * 5, wpos.y + sin(rotation) * 5}, (Vector2){wpos.x - cos(rotation) * 5, wpos.y - sin(rotation) * 5}, 1, wireColors[0]);
-            DrawLineEx((Vector2){wpos.x + cos(rotation + PI/2) * 5, wpos.y + sin(rotation + PI/2) * 5}, (Vector2){wpos.x - cos(rotation + PI/2) * 5, wpos.y - sin(rotation + PI/2) * 5}, 1, wireColors[0]);
+            DrawLineEx((Vector2){wpos.x + cos(rotation) * CURSOR_WIDTH, wpos.y + sin(rotation) * CURSOR_WIDTH}, (Vector2){wpos.x - cos(rotation) * CURSOR_WIDTH, wpos.y - sin(rotation) * CURSOR_WIDTH}, CURSOR_THICKNESS, wireColors[0]);
+            DrawLineEx((Vector2){wpos.x + cos(rotation + PI/2) * CURSOR_WIDTH, wpos.y + sin(rotation + PI/2) * CURSOR_WIDTH}, (Vector2){wpos.x - cos(rotation + PI/2) * CURSOR_WIDTH, wpos.y - sin(rotation + PI/2) * CURSOR_WIDTH}, CURSOR_THICKNESS, wireColors[0]);
         break;
 
         case PLACE_FIXED_CONTACT:
@@ -268,12 +279,12 @@ void BENCH_draw() {
         break;
 
         default:
-            DrawLineEx((Vector2){mousePos.x, mousePos.y - 5}, (Vector2){mousePos.x, mousePos.y + 5}, 1, wireColors[0]);
-            DrawLineEx((Vector2){mousePos.x - 5, mousePos.y}, (Vector2){mousePos.x + 5, mousePos.y}, 1, wireColors[0]);
+            DrawLineEx((Vector2){mousePos.x, mousePos.y - CURSOR_WIDTH}, (Vector2){mousePos.x, mousePos.y + CURSOR_WIDTH}, CURSOR_THICKNESS, wireColors[0]);
+            DrawLineEx((Vector2){mousePos.x - CURSOR_WIDTH, mousePos.y}, (Vector2){mousePos.x + CURSOR_WIDTH, mousePos.y}, CURSOR_THICKNESS, wireColors[0]);
         break;
     }
 
-    // ----------------------------
+    // -----------------------------------------------------------------------------------------------------------------
     // Mode specific UI
     if (BENCH_benchMode == DRAWING_WIRE) {
         if (hasAttachmentVertex)
@@ -281,30 +292,35 @@ void BENCH_draw() {
     }
 
 
-    // ----------------------------
+    // -----------------------------------------------------------------------------------------------------------------
     // Draw Buttons
 
+    // ---------------------------
     // Line enable button
+    bool fillLineButton = BENCH_benchMode == DRAWING_WIRE || IsKeyDown(KEY_ESCAPE);
     DrawRectangleRounded((Rectangle){
         5, 5, 30, 30
-    }, 0.1f, 3, BENCH_benchMode == DRAWING_WIRE ? BLACK : WHITE);
+    }, 0.1f, 3, fillLineButton ? BLACK : WHITE);
 
-    DrawLineEx((Vector2){10, 10}, (Vector2){30, 30}, 2, BENCH_benchMode == DRAWING_WIRE ? WHITE : BLACK);
+    DrawLineEx((Vector2){10, 10}, (Vector2){30, 30}, 2, fillLineButton ? WHITE : BLACK);
 
     DrawRectangleRoundedLines((Rectangle){
         5, 5, 30, 30
     }, 0.1f, 3, 1, BLACK);
 
+
+    // ---------------------------
     // Fixed contact enable button
+    bool fillFixedContactButton = BENCH_benchMode == PLACE_FIXED_CONTACT || IsKeyDown(KEY_ESCAPE);
     DrawRectangleRounded((Rectangle){
         5, 40, 30, 30
-    }, 0.1f, 3, BENCH_benchMode == PLACE_FIXED_CONTACT ? BLACK : WHITE);
+    }, 0.1f, 3, fillFixedContactButton ? BLACK : WHITE);
 
     DrawRectangleLinesEx((Rectangle){
         10, 45, 20, 20
-    }, 2, BENCH_benchMode == PLACE_FIXED_CONTACT ? WHITE : BLACK);
+    }, 2, fillFixedContactButton ? WHITE : BLACK);
 
-    DrawCircle(20, 55, 5, BENCH_benchMode == PLACE_FIXED_CONTACT ? WHITE : BLACK);
+    DrawCircle(20, 55, 5, fillFixedContactButton ? WHITE : BLACK);
 
     DrawRectangleRoundedLines((Rectangle){
         5, 40, 30, 30

@@ -34,4 +34,6 @@ add_executable(sim3 main.c
         Sim/SimulationResources.c
         Sim/SimulationResources.h
         GUI/Drawables/Chip.c
-        GUI/Drawables/Chip.h)
+        GUI/Drawables/Chip.h
+        Sim/SimLists/SimspaceLists.h
+        Sim/SimLists/SimspaceLists.c)

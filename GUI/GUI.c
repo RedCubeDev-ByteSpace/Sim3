@@ -10,7 +10,7 @@
 
 Font GUI_computerModern;
 void GUI_init() {
-    GUI_computerModern = LoadFontEx("../Resources/cmunbx.ttf", 100, NULL, 0);
+    GUI_computerModern = LoadFontEx("../Resources/cmunbx.ttf", 150, NULL, 0);
     SetTextureFilter(GUI_computerModern.texture, TEXTURE_FILTER_BILINEAR);
 }
 
@@ -39,4 +39,15 @@ bool LIB_IsVector2InRectangle(Vector2 pos, Rectangle rect) {
     }
 
     return false;
+}
+
+// this is required because C will always round towards zero
+// it stinkificates.
+Vector2 LIB_roundificateToWholePoint(Vector2 pos) {
+    if (pos.x > 0) pos.x = (int)(pos.x + 0.5f);
+    else if (pos.x < 0) pos.x = (int)(pos.x - 0.5f);
+    if (pos.y > 0) pos.y = (int)(pos.y + 0.5f);
+    else if (pos.y < 0) pos.y = (int)(pos.y - 0.5f);
+
+    return pos;
 }

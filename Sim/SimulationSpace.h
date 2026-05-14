@@ -6,16 +6,13 @@
 #define SIM3_SIMULATIONSPACE_H
 #include "Components/Connection.h"
 #include "Components/FixedContact.h"
-#define MAX_CONNECTIONS 100
+#include "SimLists/SimspaceLists.h"
 
-extern sim_connection_t *SIMSPACE_connections[MAX_CONNECTIONS];
-extern sim_connection_point_t *SIMSPACE_connectionPoints[MAX_CONNECTIONS];
-extern sim_fixed_contact_t *SIMSPACE_fixedContacts[MAX_CONNECTIONS];
+extern sim_connection_list_t *SIMSPACE_lstConnections;
+extern sim_connectionpoint_list_t *SIMSPACE_lstConnectionPoints;
+extern sim_fixedcontact_list_t *SIMSPACE_lstFixedContacts;
 
 void SIMSPACE_init();
 void SIMSPACE_process();
-int SIMSPACE_addConnection(sim_connection_t *connection);
-int SIMSPACE_addConnectionPoint(sim_connection_point_t *connection);
-int SIMSPACE_addFixedContact(sim_fixed_contact_t *contact);
 
 #endif //SIM3_SIMULATIONSPACE_H

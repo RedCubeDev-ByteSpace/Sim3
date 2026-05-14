@@ -7,6 +7,7 @@
 
 #include <math.h>
 
+Vector2 GUI_WindowSize;
 float GRID_zoom;
 Vector2 GRID_cameraPos;
 Vector2 GRID_cameraOffset;
@@ -27,8 +28,8 @@ void GRID_draw() {
         0,0,0, 128 * (GRID_zoom > 1 ? 1 : GRID_zoom),
     };
 
-    for (float x = fmod(cameraPosition.x, gridSpacing); x < WINDOW_WIDTH; x += gridSpacing) {
-        for (float y = fmod(cameraPosition.y, gridSpacing); y < WINDOW_HEIGHT; y += gridSpacing) {
+    for (float x = fmod(cameraPosition.x, gridSpacing); x < GUI_WindowSize.x; x += gridSpacing) {
+        for (float y = fmod(cameraPosition.y, gridSpacing); y < GUI_WindowSize.y; y += gridSpacing) {
             DrawPixel(x, y, gridColor);
         }
     }
