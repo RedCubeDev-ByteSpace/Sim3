@@ -44,6 +44,7 @@ void SIMSPACE_process() {
     // Update all chipificators
     for (int i = 0; i < SIMSPACE_lstChips->length; ++i) {
         SIM_CHIP_step(SIMSPACE_lstChips->buffer[i]);
+        SIM_CHIP_refreshDrawable(SIMSPACE_lstChips->buffer[i]);
     }
 }
 

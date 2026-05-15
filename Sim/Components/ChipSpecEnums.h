@@ -9,4 +9,8 @@ typedef enum SIM_PIN_SPECIFICATION {
     PIN_INPUT, PIN_OUTPUT, PIN_POWER
 } sim_pin_specification_t;
 
+typedef enum SIM_PIN_DISPLAY_STATE {
+    PIN_DISP_INPUT, PIN_DISP_OUTPUT_LOW, PIN_DISP_OUTPUT_HIGH, PIN_DISP_POWER
+} sim_pin_display_state_t;
+
 #endif //SIM3_CHIPSPECENUMS_H

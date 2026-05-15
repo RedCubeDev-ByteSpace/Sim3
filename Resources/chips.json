@@ -1,7 +1,7 @@
 [
   {
     "Name": "74LS00",
-    "Function": "4x 2-Input-NOR",
+    "Function": "4x 2-Input-NAND",
     "Pins": 14,
     "Inputs": [
       1,2,4,5,9,10,12,13
@@ -14,6 +14,24 @@
     ],
     "Lua": {
       "Script": "74LS00.lua",
+      "IsStateful": false
+    }
+  },
+  {
+    "Name": "74LS02",
+    "Function": "4x 2-Input-NOR",
+    "Pins": 14,
+    "Inputs": [
+      2, 3, 5, 6, 8, 9, 11, 12
+    ],
+    "Outputs": [
+      1, 4, 10, 13
+    ],
+    "Power": [
+      7, 14
+    ],
+    "Lua": {
+      "Script": "74LS02.lua",
       "IsStateful": false
     }
   }

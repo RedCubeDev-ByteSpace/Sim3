@@ -47,7 +47,7 @@ void BENCH_init() {
     DRAWABLES_LED_init(newLED, (Vector2){0,0});
 
     newChip = malloc(sizeof(drw_chip_t));
-    DRAWABLES_CHIP_init(newChip, (Vector2){0,0}, SIMRES_chipSpecifications[0].name, SIMRES_chipSpecifications[0].function, SIMRES_chipSpecifications[0].numPins / 2, SIMRES_chipSpecifications[0].pinSpecs);
+    DRAWABLES_CHIP_init(newChip, (Vector2){0,0}, SIMRES_chipSpecifications[0].name, SIMRES_chipSpecifications[0].function, SIMRES_chipSpecifications[0].numPins / 2);
 }
 
 void BENCH_process() {
@@ -166,7 +166,7 @@ void BENCH_process() {
 
                 free(newChip);
                 newChip = malloc(sizeof(drw_chip_t));
-                DRAWABLES_CHIP_init(newChip, (Vector2){0,0}, SIMRES_chipSpecifications[i].name, SIMRES_chipSpecifications[i].function, SIMRES_chipSpecifications[i].numPins / 2, SIMRES_chipSpecifications[i].pinSpecs);
+                DRAWABLES_CHIP_init(newChip, (Vector2){0,0}, SIMRES_chipSpecifications[i].name, SIMRES_chipSpecifications[i].function, SIMRES_chipSpecifications[i].numPins / 2);
 
                 return;
             }

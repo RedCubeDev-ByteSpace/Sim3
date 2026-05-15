@@ -13,7 +13,7 @@ void SIM_CHIP_init(sim_chip_t *me, Vector2 position, sim_chip_specification_t *c
 
     // create the chip drawable for this component
     me->chip = malloc(sizeof(drw_chip_t));
-    DRAWABLES_CHIP_init(me->chip, position, chipSpec->name, chipSpec->function, chipSpec->numPins / 2, chipSpec->pinSpecs);
+    DRAWABLES_CHIP_init(me->chip, position, chipSpec->name, chipSpec->function, chipSpec->numPins / 2);
     DRAWABLES_enqueue((drawable_t*)me->chip);
 
     // create all connection points
@@ -103,7 +103,26 @@ void SIM_CHIP_init(sim_chip_t *me, Vector2 position, sim_chip_specification_t *c
 }
 
 void SIM_CHIP_refreshDrawable(sim_chip_t *me) {
+    for (int i = 0; i < me->connectionPoints.length; ++i) {
+        sim_connection_point_t *conPoint = me->connectionPoints.buffer[i];
 
+        if (me->chipSpec->pinSpecs[i] == PIN_POWER) {
+            me->chip->pinDisplayStates[i] = PIN_DISP_POWER;
+            continue;
+        }
+
+        switch (conPoint->state) {
+            case CONNECTION_POINT_FLOATING:
+                me->chip->pinDisplayStates[i] = PIN_DISP_INPUT;
+                continue;
+            case CONNECTION_POINT_LOW:
+                me->chip->pinDisplayStates[i] = PIN_DISP_OUTPUT_LOW;
+                continue;
+            case CONNECTION_POINT_HIGH:
+                me->chip->pinDisplayStates[i] = PIN_DISP_OUTPUT_HIGH;
+                continue;
+        }
+    }
 }
 
 void SIM_CHIP_setup(sim_chip_t *me) {

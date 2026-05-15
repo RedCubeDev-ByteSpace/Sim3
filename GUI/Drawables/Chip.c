@@ -6,13 +6,16 @@
 #include "../Grid.h"
 #include "../GUI.h"
 
-void DRAWABLES_CHIP_init(drw_chip_t *me, Vector2 pos, char *name, char *function, int numConnectorsPerRow, sim_pin_specification_t *chipSpec) {
+void DRAWABLES_CHIP_init(drw_chip_t *me, Vector2 pos, char *name, char *function, int numConnectorsPerRow) {
     me->base.type = DRAWABLE_CHIP;
     me->position = pos;
     me->name = name;
     me->function = function;
     me->numConnectorsPerRow = numConnectorsPerRow;
-    me->chipSpec = chipSpec;
+
+    for (int i = 0; i < me->numConnectorsPerRow * 2; ++i) {
+        me->pinDisplayStates[i] = PIN_DISP_OUTPUT_LOW;
+    }
 }
 
 void DRAWABLES_CHIP_draw(drw_chip_t *me) {
@@ -22,25 +25,12 @@ void DRAWABLES_CHIP_draw(drw_chip_t *me) {
     for (int i = 0; i < me->numConnectorsPerRow; i++) {
 
         // top row
-        if (me->chipSpec[me->numConnectorsPerRow - i - 1] == PIN_POWER) {
-            DrawCircle(wpos.x + i * zoomedSpacing, wpos.y, 1 * GRID_zoom, BLACK);
-        }
-        else {
-            DrawCircleLines(wpos.x + i * zoomedSpacing, wpos.y, 1 * GRID_zoom, BLACK);
-        }
-
         DrawLine(wpos.x + i * zoomedSpacing, wpos.y, wpos.x + i * zoomedSpacing, wpos.y + zoomedSpacing, BLACK);
+        DRAWABLES_CHIP_drawPin((Vector2){wpos.x + i * zoomedSpacing, wpos.y}, true, me->pinDisplayStates[me->numConnectorsPerRow * 2 - i - 1]);
 
         // bottom row
-        if (me->chipSpec[i] == PIN_POWER) {
-            DrawCircle(wpos.x + i * zoomedSpacing, wpos.y + 4*zoomedSpacing, 1 * GRID_zoom, BLACK);
-        }
-        else {
-            DrawCircleLines(wpos.x + i * zoomedSpacing, wpos.y + 4*zoomedSpacing, 1 * GRID_zoom, BLACK);
-        }
-
-
         DrawLine(wpos.x + i * zoomedSpacing, wpos.y + 4*zoomedSpacing, wpos.x + i * zoomedSpacing, wpos.y + 3*zoomedSpacing, BLACK);
+        DRAWABLES_CHIP_drawPin((Vector2){wpos.x + i * zoomedSpacing, wpos.y + 4 * zoomedSpacing}, false, me->pinDisplayStates[i]);
     }
 
     DrawRectangleLinesEx((Rectangle){
@@ -53,15 +43,6 @@ void DRAWABLES_CHIP_draw(drw_chip_t *me) {
         4 * GRID_zoom,
         -90, 90, 10, BLACK);
 
-    // int fontSize = 0;
-    // for (int i = 0; i < 300; i += 2) {
-    //     Vector2 size = MeasureTextEx(GUI_computerModern, me->name, i, 1);
-    //     if (size.y > zoomedSpacing) {
-    //         fontSize = i;
-    //         break;
-    //     }
-    // }
-
     Vector2 size = MeasureTextEx(GUI_computerModern, me->name, zoomedSpacing, 1);
     DrawTextEx(GUI_computerModern, me->name,
         (Vector2) {
@@ -69,6 +50,91 @@ void DRAWABLES_CHIP_draw(drw_chip_t *me) {
             wpos.y + zoomedSpacing + zoomedSpacing - size.y / 2 + zoomedSpacing * 0.05f
         },
         zoomedSpacing, 1, BLACK);
+
+}
+
+void DRAWABLES_CHIP_drawPin(Vector2 pos, bool isTopRow, sim_pin_display_state_t state) {
+    switch (state) {
+        case PIN_DISP_POWER:
+            DrawCircle(pos.x, pos.y, 1 * GRID_zoom, BLACK);
+            break;
+        case PIN_DISP_INPUT:
+            if (!isTopRow) {
+                DrawTriangle(
+                    (Vector2){ pos.x, pos.y - GRID_zoom },
+                    (Vector2){ pos.x - GRID_zoom, pos.y + GRID_zoom },
+                    (Vector2){ pos.x + GRID_zoom, pos.y + GRID_zoom },
+                    WHITE
+                );
+                DrawTriangleLines(
+                    (Vector2){ pos.x, pos.y - GRID_zoom },
+                    (Vector2){ pos.x - GRID_zoom, pos.y + GRID_zoom },
+                    (Vector2){ pos.x + GRID_zoom, pos.y + GRID_zoom },
+                    BLACK
+                );
+            } else {
+                DrawTriangle(
+                    (Vector2){ pos.x, pos.y + GRID_zoom },
+                    (Vector2){ pos.x + GRID_zoom, pos.y - GRID_zoom },
+                    (Vector2){ pos.x - GRID_zoom, pos.y - GRID_zoom },
+                    WHITE
+                );
+                DrawTriangleLines(
+                    (Vector2){ pos.x, pos.y + GRID_zoom },
+                    (Vector2){ pos.x - GRID_zoom, pos.y - GRID_zoom },
+                    (Vector2){ pos.x + GRID_zoom, pos.y - GRID_zoom },
+                    BLACK
+                );
+            }
+            break;
+        case PIN_DISP_OUTPUT_LOW:
+            if (isTopRow) {
+                DrawTriangle(
+                    (Vector2){ pos.x, pos.y - GRID_zoom },
+                    (Vector2){ pos.x - GRID_zoom, pos.y + GRID_zoom },
+                    (Vector2){ pos.x + GRID_zoom, pos.y + GRID_zoom },
+                    WHITE
+                );
+                DrawTriangleLines(
+                    (Vector2){ pos.x, pos.y - GRID_zoom },
+                    (Vector2){ pos.x - GRID_zoom, pos.y + GRID_zoom },
+                    (Vector2){ pos.x + GRID_zoom, pos.y + GRID_zoom },
+                    BLACK
+                );
+            } else {
+                DrawTriangle(
+                    (Vector2){ pos.x, pos.y + GRID_zoom },
+                    (Vector2){ pos.x + GRID_zoom, pos.y - GRID_zoom },
+                    (Vector2){ pos.x - GRID_zoom, pos.y - GRID_zoom },
+                    WHITE
+                );
+                DrawTriangleLines(
+                    (Vector2){ pos.x, pos.y + GRID_zoom },
+                    (Vector2){ pos.x - GRID_zoom, pos.y - GRID_zoom },
+                    (Vector2){ pos.x + GRID_zoom, pos.y - GRID_zoom },
+                    BLACK
+                );
+            }
+            break;
+        case PIN_DISP_OUTPUT_HIGH:
+            if (isTopRow) {
+                DrawTriangle(
+                    (Vector2){ pos.x, pos.y - GRID_zoom },
+                    (Vector2){ pos.x - GRID_zoom, pos.y + GRID_zoom },
+                    (Vector2){ pos.x + GRID_zoom, pos.y + GRID_zoom },
+                    BLACK
+                );
+            } else {
+                DrawTriangle(
+                    (Vector2){ pos.x, pos.y + GRID_zoom },
+                    (Vector2){ pos.x + GRID_zoom, pos.y - GRID_zoom },
+                    (Vector2){ pos.x - GRID_zoom, pos.y - GRID_zoom },
+                    BLACK
+                );
+            }
+            break;
+    }
+
 
 }
 

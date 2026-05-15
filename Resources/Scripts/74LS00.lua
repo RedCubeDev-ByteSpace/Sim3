@@ -25,16 +25,16 @@ end
 
 function Step(pinStates)
 
-    pinStates[3] .pin = nor(pinStates[1] .wire, pinStates[2] .wire);
-    pinStates[6] .pin = nor(pinStates[4] .wire, pinStates[5] .wire);
-    pinStates[8] .pin = nor(pinStates[9] .wire, pinStates[10].wire);
-    pinStates[11].pin = nor(pinStates[12].wire, pinStates[13].wire);
+    pinStates[3] .pin = nand(pinStates[1] .wire, pinStates[2] .wire);
+    pinStates[6] .pin = nand(pinStates[4] .wire, pinStates[5] .wire);
+    pinStates[8] .pin = nand(pinStates[9] .wire, pinStates[10].wire);
+    pinStates[11].pin = nand(pinStates[12].wire, pinStates[13].wire);
 
     return pinStates;
 end
 
-function nor(a, b)
-    if not (a == 1 or b == 1) then
+function nand(a, b)
+    if not (a == 1 and b == 1) then
         return 1;
     else
         return 0;
