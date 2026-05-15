@@ -209,33 +209,7 @@ void BENCH_process() {
             // is this a known connection or are we starting a new one?
             if (thisConnection == NULL) {
 
-                // no connection yet
-                // are we trying to attach to an existing connection?
-                for (int i = 0; i < SIMSPACE_lstConnections->length; ++i) {
-                    sim_connection_t *con = SIMSPACE_lstConnections->buffer[i];
-                    if (con->lstVectorPairs.length == 0) continue;
-
-                    for (int ii = 0; ii < con->lstVectorPairs.length; ++ii) {
-                        Vector2 from = con->lstVectorPairs.buffer[ii].from;
-                        Vector2 to = con->lstVectorPairs.buffer[ii].to;
-
-                        if (from.x == wpos.x && from.y == wpos.y) {
-                            attachmentVertex = from;
-                            hasAttachmentVertex = true;
-                            thisConnection = con;
-                            return;
-                        }
-
-                        if (to.x == wpos.x && to.y == wpos.y) {
-                            attachmentVertex = to;
-                            hasAttachmentVertex = true;
-                            thisConnection = con;
-                            return;
-                        }
-                    }
-                }
-
-                // if we didnt find any existing connection -> create a new one
+                // no connection yet -> create a new one
                 thisConnection = malloc(sizeof(sim_connection_t));
                 SIM_CONNECTION_init(thisConnection, wireColors[0]);
 
@@ -294,6 +268,7 @@ void BENCH_process() {
             else {
                 hasAttachmentVertex = false;
                 thisConnection = NULL;
+                SIMSPACE_mergeOverlappingConnections();
                 //BENCH_benchMode = IDLE;
             }
         }

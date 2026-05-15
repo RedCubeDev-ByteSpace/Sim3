@@ -14,5 +14,6 @@ extern sim_chip_list_t *SIMSPACE_lstChips;
 
 void SIMSPACE_init();
 void SIMSPACE_process();
+void SIMSPACE_mergeOverlappingConnections();
 
 #endif //SIM3_SIMULATIONSPACE_H
