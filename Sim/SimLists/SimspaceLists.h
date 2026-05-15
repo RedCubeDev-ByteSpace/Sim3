@@ -6,11 +6,11 @@
 #define SIM3_SIMSPACELISTS_H
 #include <stdint.h>
 #include "../Components/FixedContact.h"
-#include "../Components/Chip.h"
 #include "../Components/LED.h"
 
 // cyclic references
 typedef struct SIM_CONNECTION sim_connection_t;
+typedef struct SIM_CHIP sim_chip_t;
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Dynamic list for all kinds of nonsense

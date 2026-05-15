@@ -11,6 +11,7 @@
 #include "Drawables/LED.h"
 #include "Drawables/Wire.h"
 #include "Drawables/WireBranchingPoint.h"
+#include "../Sim/SimulationResources.h"
 
 
 drawable_t *drawables[MAX_DRAWABLES];
@@ -19,10 +20,6 @@ void DRAWABLES_init() {
     for (int i = 0; i < MAX_DRAWABLES; i++) {
         drawables[i] = NULL;
     }
-
-    drw_chip_t *chip = malloc(sizeof(drw_chip_t));
-    DRAWABLES_CHIP_init(chip, (Vector2){10, 10}, "74LS00", "4x 2-Input-NOR", 7);
-    DRAWABLES_enqueue((drawable_t*)chip);
 }
 
 int DRAWABLES_enqueue(drawable_t *drawable) {

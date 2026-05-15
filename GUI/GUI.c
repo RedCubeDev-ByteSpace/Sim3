@@ -9,9 +9,16 @@
 #include "Grid.h"
 
 Font GUI_computerModern;
+Font GUI_computerModern20;
+Font GUI_computerModern16;
+
 void GUI_init() {
     GUI_computerModern = LoadFontEx("../Resources/cmunbx.ttf", 150, NULL, 0);
+    GUI_computerModern20 = LoadFontEx("../Resources/cmunbx.ttf", 20, NULL, 0);
+    GUI_computerModern16 = LoadFontEx("../Resources/cmunbx.ttf", 16, NULL, 0);
     SetTextureFilter(GUI_computerModern.texture, TEXTURE_FILTER_BILINEAR);
+    SetTextureFilter(GUI_computerModern20.texture, TEXTURE_FILTER_BILINEAR);
+    SetTextureFilter(GUI_computerModern16.texture, TEXTURE_FILTER_BILINEAR);
 }
 
 float LIB_lerp(float a, float b, float f)

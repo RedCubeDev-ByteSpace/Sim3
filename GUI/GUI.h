@@ -16,6 +16,8 @@
 #define ZOOM_LERP_CUTOFF 0.001f
 
 extern Font GUI_computerModern;
+extern Font GUI_computerModern20;
+extern Font GUI_computerModern16;
 void GUI_init();
 
 float LIB_lerp(float a, float b, float f);

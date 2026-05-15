@@ -4,6 +4,7 @@
 
 #include "ConnectionPoint.h"
 
+#include "Connection.h"
 #include "../SimulationSpace.h"
 
 void SIM_CONNECTION_POINT_init(sim_connection_point_t* me, sim_connection_point_state_t state, Vector2 position) {

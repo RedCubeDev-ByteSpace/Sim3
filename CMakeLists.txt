@@ -45,4 +45,5 @@ add_executable(sim3 main.c
         GUI/Drawables/LED.c
         GUI/Drawables/LED.h
         Sim/Components/LED.c
-        Sim/Components/LED.h)
+        Sim/Components/LED.h
+        Sim/Components/ChipSpecEnums.h)

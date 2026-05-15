@@ -6,21 +6,26 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+#include "Components/Connection.h"
+
 sim_connection_list_t *SIMSPACE_lstConnections;
 sim_connectionpoint_list_t *SIMSPACE_lstConnectionPoints;
 sim_fixedcontact_list_t *SIMSPACE_lstFixedContacts;
 sim_led_list_t *SIMSPACE_lstLEDs;
+sim_chip_list_t *SIMSPACE_lstChips;
 
 void SIMSPACE_init() {
     SIMSPACE_lstConnections = malloc(sizeof(sim_comp_list_t));
     SIMSPACE_lstConnectionPoints = malloc(sizeof(sim_comp_list_t));
     SIMSPACE_lstFixedContacts = malloc(sizeof(sim_comp_list_t));
     SIMSPACE_lstLEDs = malloc(sizeof(sim_led_list_t));
+    SIMSPACE_lstChips = malloc(sizeof(sim_chip_list_t));
 
     SIM_COMP_LIST_init(SIMSPACE_lstConnections);
     SIM_COMP_LIST_init(SIMSPACE_lstConnectionPoints);
     SIM_COMP_LIST_init(SIMSPACE_lstFixedContacts);
     SIM_COMP_LIST_init(SIMSPACE_lstLEDs);
+    SIM_COMP_LIST_init(SIMSPACE_lstChips);
 }
 
 void SIMSPACE_process() {

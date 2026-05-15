@@ -5,7 +5,7 @@
 #ifndef SIM3_SIMULATIONRESOURCES_H
 #define SIM3_SIMULATIONRESOURCES_H
 #include "Components/Chip.h"
-#define MAX_CHIP_SPECS 1
+#define MAX_CHIP_SPECS 10
 
 extern sim_chip_specification_t SIMRES_chipSpecifications[MAX_CHIP_SPECS];
 extern int SIMRES_numChipSpecs;

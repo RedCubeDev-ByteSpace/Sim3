@@ -4,9 +4,12 @@
 #include "Bench.h"
 
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 
+#include "Grid.h"
 #include "GUI.h"
+#include "../Sim/SimulationResources.h"
 #include "../Sim/SimulationSpace.h"
 #include "Drawables/Wire.h"
 #include "../Sim/Components/Connection.h"
@@ -25,6 +28,10 @@ drw_fixed_contact_t *newContact;
 // ---------------------------------------------------------------------------------------------------------------------
 // Data for led placement mode
 drw_led_t *newLED;
+// ---------------------------------------------------------------------------------------------------------------------
+// Data for chip placement
+int selectedChip = 0;
+drw_chip_t *newChip;
 
 void BENCH_init() {
     BENCH_benchMode = IDLE;
@@ -38,6 +45,9 @@ void BENCH_init() {
 
     newLED = malloc(sizeof(drw_led_t));
     DRAWABLES_LED_init(newLED, (Vector2){0,0});
+
+    newChip = malloc(sizeof(drw_chip_t));
+    DRAWABLES_CHIP_init(newChip, (Vector2){0,0}, SIMRES_chipSpecifications[0].name, SIMRES_chipSpecifications[0].function, SIMRES_chipSpecifications[0].numPins / 2, SIMRES_chipSpecifications[0].pinSpecs);
 }
 
 void BENCH_process() {
@@ -112,8 +122,24 @@ void BENCH_process() {
             return;
         }
 
-        // "Delete" Button
+        // "Chip placement" Button
         if (LIB_IsVector2InRectangle(mousePos, (Rectangle){ 5, 3 * 35 + 5, 30, 30})) {
+
+            // if we're not currently in this mode -> go there
+            if (BENCH_benchMode != PLACE_CHIP) {
+                BENCH_benchMode = PLACE_CHIP;
+            }
+
+            // otherwise, if we are: switch to idle
+            else {
+                BENCH_benchMode = IDLE;
+            }
+
+            return;
+        }
+
+        // "Delete" Button
+        if (LIB_IsVector2InRectangle(mousePos, (Rectangle){ 5, 4 * 35 + 5, 30, 30})) {
 
             // if we're not currently in this mode -> go there
             if (BENCH_benchMode != DELETION) {
@@ -126,6 +152,26 @@ void BENCH_process() {
             }
 
             return;
+        }
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // Chip selection buttons
+    if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
+        int yOffset = 5;
+        for (int i = 0; i < SIMRES_numChipSpecs; ++i) {
+
+            if (LIB_IsVector2InRectangle(mousePos, (Rectangle){ GUI_WindowSize.x - 155, yOffset, 150, 30})) {
+                selectedChip = i;
+
+                free(newChip);
+                newChip = malloc(sizeof(drw_chip_t));
+                DRAWABLES_CHIP_init(newChip, (Vector2){0,0}, SIMRES_chipSpecifications[i].name, SIMRES_chipSpecifications[i].function, SIMRES_chipSpecifications[i].numPins / 2, SIMRES_chipSpecifications[i].pinSpecs);
+
+                return;
+            }
+
+            yOffset += 35;
         }
     }
 
@@ -296,6 +342,28 @@ void BENCH_process() {
     }
 
     // -------------------------------------------------------------------------------------------
+    // Chip placement mode
+    if (BENCH_benchMode == PLACE_CHIP) {
+        if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
+
+            // make sure there isnt already a contact at this position
+            // Todo: expand this to all pins on the chip
+            for (int i = 0; i < SIMSPACE_lstConnectionPoints->length; ++i) {
+                sim_connection_point_t *conPoint = SIMSPACE_lstConnectionPoints->buffer[i];
+                if (conPoint->position.x == wpos.x && conPoint->position.y == wpos.y) {
+                    // this space is already occupied!!
+                    return;
+                }
+            }
+
+            // create a new fixed contact at this position
+            sim_chip_t *chip = malloc(sizeof(sim_chip_t));
+            SIM_CHIP_init(chip, wpos, &SIMRES_chipSpecifications[selectedChip]);
+            SIM_COMP_LIST_appendChip(SIMSPACE_lstChips, chip);
+        }
+    }
+
+    // -------------------------------------------------------------------------------------------
     // Deletion mode
     if (BENCH_benchMode == DELETION) {
         if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
@@ -381,6 +449,34 @@ void BENCH_process() {
             }
 
             SIM_COMP_LIST_clear(&lst);
+
+            // ---------------------------------------------------------------------------------------------------------
+            // have we hit a chip?
+            for (int i = 0; i < SIMSPACE_lstChips->length; ++i) {
+                sim_chip_t *chip = SIMSPACE_lstChips->buffer[i];
+
+                for (int ii = 0; ii < chip->connectionPoints.length; ++ii) {
+                    sim_connection_point_t *conPoint = chip->connectionPoints.buffer[ii];
+
+                    if (conPoint->position.x == wpos.x && conPoint->position.y == wpos.y) {
+                        SIM_COMP_LIST_appendChip(&lst, chip);
+                        goto next_chip;
+                    }
+                }
+
+                next_chip:
+            }
+
+            // death
+            for (int i = 0; i < lst.length; ++i) {
+                sim_chip_t *chip = lst.buffer[i];
+
+                SIM_CHIP_unload(chip);
+                SIM_COMP_LIST_removeChipRef(SIMSPACE_lstChips, chip);
+                free(chip);
+            }
+
+            SIM_COMP_LIST_clear(&lst);
         }
     }
 }
@@ -412,6 +508,11 @@ void BENCH_draw() {
         case PLACE_LED:
             newLED->position = pos;
             DRAWABLES_LED_draw(newLED);
+            break;
+
+        case PLACE_CHIP:
+            newChip->position = pos;
+            DRAWABLES_CHIP_draw(newChip);
             break;
 
         case DELETION:
@@ -452,7 +553,7 @@ void BENCH_draw() {
 
 
     // ---------------------------
-    // Fixed contact mode button
+    // Fixed contact placement mode button
     anchorY += 35;
 
     bool fillFixedContactButton = BENCH_benchMode == PLACE_FIXED_CONTACT || IsKeyDown(KEY_ESCAPE);
@@ -471,7 +572,7 @@ void BENCH_draw() {
     }, 0.1f, 3, 1, BLACK);
 
     // ---------------------------
-    // Fixed contact mode button
+    // Led placement mode button
     anchorY += 35;
 
     bool fillLEDButton = BENCH_benchMode == PLACE_LED || IsKeyDown(KEY_ESCAPE);
@@ -482,6 +583,30 @@ void BENCH_draw() {
     DrawCircle(20, anchorY + 20, 8, fillLEDButton ? WHITE : BLACK);
     DrawCircle(20, anchorY + 20, 8 - LINE_THICKNESS, !fillLEDButton ? WHITE : BLACK);
     DrawCircle(20, anchorY + 20, 5, fillLEDButton ? WHITE : BLACK);
+
+    DrawRectangleRoundedLines((Rectangle){
+        5, anchorY + 5, 30, 30
+    }, 0.1f, 3, 1, BLACK);
+
+    // ---------------------------
+    // Fixed contact placement mode button
+    anchorY += 35;
+
+    bool fillChipButton = BENCH_benchMode == PLACE_CHIP || IsKeyDown(KEY_ESCAPE);
+    DrawRectangleRounded((Rectangle){
+        5, anchorY + 5, 30, 30
+    }, 0.1f, 3, fillChipButton ? BLACK : WHITE);
+
+    DrawRectangleLinesEx((Rectangle){
+        10, anchorY + 15, 20, 10
+    }, 2, fillChipButton ? WHITE : BLACK);
+
+    DrawLineEx((Vector2){ 15, anchorY + 10}, (Vector2){ 15, anchorY + 15}, 1, fillChipButton ? WHITE : BLACK);
+    DrawLineEx((Vector2){ 20, anchorY + 10}, (Vector2){ 20, anchorY + 15}, 1, fillChipButton ? WHITE : BLACK);
+    DrawLineEx((Vector2){ 25, anchorY + 10}, (Vector2){ 25, anchorY + 15}, 1, fillChipButton ? WHITE : BLACK);
+    DrawLineEx((Vector2){ 15, anchorY + 25}, (Vector2){ 15, anchorY + 30}, 1, fillChipButton ? WHITE : BLACK);
+    DrawLineEx((Vector2){ 20, anchorY + 25}, (Vector2){ 20, anchorY + 30}, 1, fillChipButton ? WHITE : BLACK);
+    DrawLineEx((Vector2){ 25, anchorY + 25}, (Vector2){ 25, anchorY + 30}, 1, fillChipButton ? WHITE : BLACK);
 
     DrawRectangleRoundedLines((Rectangle){
         5, anchorY + 5, 30, 30
@@ -505,4 +630,29 @@ void BENCH_draw() {
     DrawRectangleRoundedLines((Rectangle){
         5, anchorY + 5, 30, 30
     }, 0.1f, 3, 1, BLACK);
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // Draw Chip Buttons
+    anchorY = 0;
+    int width = 150;
+
+    for (int i = 0; i < SIMRES_numChipSpecs; ++i) {
+
+        bool selected = i == selectedChip;
+
+        DrawRectangleRounded((Rectangle){
+            GUI_WindowSize.x - width - 5, anchorY + 5, width, 30
+        }, 0.1f, 3, selected ? BLACK : WHITE);
+
+        DrawRectangleRoundedLines((Rectangle){
+            GUI_WindowSize.x - width - 5, anchorY + 5, width, 30
+        }, 0.1f, 3, 1, BLACK);
+
+        Vector2 size = MeasureTextEx(GUI_computerModern16, SIMRES_chipSpecifications[i].name, 16, 1);
+        DrawTextEx(GUI_computerModern16, SIMRES_chipSpecifications[i].name, (Vector2){ GUI_WindowSize.x - width - 5 + width / 2 - size.x / 2, anchorY + 6 }, 16, 1, !selected ? BLACK : WHITE);
+        size = MeasureTextEx(GUI_computerModern20, SIMRES_chipSpecifications[i].function, 16, 1);
+        DrawTextEx(GUI_computerModern20, SIMRES_chipSpecifications[i].function, (Vector2){ GUI_WindowSize.x - width - 5 + width / 2 - size.x / 2, anchorY + 18 }, 16, 1, !selected ? BLACK : WHITE);
+
+        anchorY += 35;
+    }
 }
