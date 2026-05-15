@@ -12,27 +12,9 @@
     "Power": [
       7, 14
     ],
-    "LUA": {
-      "Script": "ABC",
-      "IsStatefull": false
-    }
-  },
-  {
-    "Name": "74LS01",
-    "Function": "4x 2-Input-NOR",
-    "Pins": 14,
-    "Inputs": [
-      1,2,4,5,9,10,12,13
-    ],
-    "Outputs": [
-      3, 6, 8, 11
-    ],
-    "Power": [
-      7, 14
-    ],
-    "LUA": {
-      "Script": "ABC",
-      "IsStatefull": false
+    "Lua": {
+      "Script": "74LS00.lua",
+      "IsStateful": false
     }
   }
 ]

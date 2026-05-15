@@ -26,6 +26,7 @@ void SIMRES_init() {
         sim_chip_specification_t *me = &SIMRES_chipSpecifications[i];
         json_object *myEntry = json_object_array_get_idx(listOfChips, i);
 
+        // -------------------------------------------------------------------------------------------------------------
         // copy over the name and function string
         const char *name = json_object_get_string(json_object_object_get(myEntry, "Name"));
         const char *function = json_object_get_string(json_object_object_get(myEntry, "Function"));
@@ -35,6 +36,7 @@ void SIMRES_init() {
         strcpy(me->name, name);
         strcpy(me->function, function);
 
+        // -------------------------------------------------------------------------------------------------------------
         // configure the pins
         me->numPins = json_object_get_int(json_object_object_get(myEntry, "Pins"));
         me->pinSpecs = malloc(me->numPins * sizeof(sim_pin_specification_t));
@@ -62,11 +64,28 @@ void SIMRES_init() {
             int index = json_object_get_int(json_object_array_get_idx(pinArray, ii));
             me->pinSpecs[index - 1] = PIN_POWER;
         }
+
+        // -------------------------------------------------------------------------------------------------------------
+        // configure the lua
+        json_object *lua = json_object_object_get(myEntry, "Lua");
+
+        // assemble the scripts path
+        char *pathTemplate = "../Resources/Scripts/%s";
+        char *scriptName = json_object_get_string(json_object_object_get(lua, "Script"));
+        int bufferSize = snprintf(NULL, 0, pathTemplate, scriptName) + 1;
+        me->script = malloc(bufferSize);
+        snprintf(me->script, bufferSize, pathTemplate, scriptName);
+
+        // remember if this chip is stateless or stateful
+        // -> this determins on if its called via a step() or stepRising() and stepFalling() call
+        me->isStateful = json_object_get_boolean(json_object_object_get(lua, "IsStateful"));
     }
 
     for (int i = 0; i < SIMRES_numChipSpecs; ++i) {
         printf("Name: %s\n", SIMRES_chipSpecifications[i].name);
         printf("Function: %s\n", SIMRES_chipSpecifications[i].function);
+        printf("Script: %s\n", SIMRES_chipSpecifications[i].script);
+        printf("Stateful: %d\n", SIMRES_chipSpecifications[i].isStateful);
         printf("Pins:\n");
         for (int ii = 0; ii < SIMRES_chipSpecifications[i].numPins / 2; ++ii) {
             sim_pin_specification_t pin = SIMRES_chipSpecifications[i].pinSpecs[SIMRES_chipSpecifications[i].numPins - ii - 1];

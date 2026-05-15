@@ -6,6 +6,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+#include "Components/Chip.h"
 #include "Components/Connection.h"
 
 sim_connection_list_t *SIMSPACE_lstConnections;
@@ -38,6 +39,11 @@ void SIMSPACE_process() {
     // Update all LEDs
     for (int i = 0; i < SIMSPACE_lstLEDs->length; ++i) {
         SIM_LED_refreshDrawable(SIMSPACE_lstLEDs->buffer[i]);
+    }
+
+    // Update all chipificators
+    for (int i = 0; i < SIMSPACE_lstChips->length; ++i) {
+        SIM_CHIP_step(SIMSPACE_lstChips->buffer[i]);
     }
 }
 

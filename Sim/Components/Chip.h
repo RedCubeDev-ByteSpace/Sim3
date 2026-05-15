@@ -4,6 +4,7 @@
 
 #ifndef SIM3_SIMCHIP_H
 #define SIM3_SIMCHIP_H
+#include <lua.h>
 #include "ChipSpecEnums.h"
 #include "../SimulationSpace.h"
 #include "../../GUI/Drawables/Chip.h"
@@ -12,7 +13,12 @@ typedef struct SIM_CHIP_SPECIFICATION {
 
     char *name;
     char *function;
+
     int numPins;
+
+    char *script;
+    bool isStateful;
+
     sim_pin_specification_t *pinSpecs;
 
 } sim_chip_specification_t;
@@ -21,12 +27,17 @@ typedef struct SIM_CHIP {
 
     sim_chip_specification_t *chipSpec;
     sim_connectionpoint_list_t connectionPoints;
+
+    lua_State *luaState;
+
     drw_chip_t *chip;
 
 } sim_chip_t;
 
 void SIM_CHIP_init(sim_chip_t *me, Vector2 position, sim_chip_specification_t *chipSpec);
 void SIM_CHIP_refreshDrawable(sim_chip_t *me);
+void SIM_CHIP_setup(sim_chip_t *me);
+void SIM_CHIP_step(sim_chip_t *me);
 void SIM_CHIP_unload(sim_chip_t *me);
 
 #endif //SIM3_SIMCHIP_H
