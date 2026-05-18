@@ -115,7 +115,86 @@ void SIMSPACE_mergeOverlappingConnections() {
                             hasDoneMerge = true;
                             goto next_merge_con;
                         }
+                    }
+                }
 
+                // go through all connection points on this connection
+                for (int conPointIndex = 0; conPointIndex < outerCon->lstConnectableVectors.length; ++conPointIndex) {
+                    sim_connectable_vector_t conPoint = outerCon->lstConnectableVectors.buffer[conPointIndex];
+
+                    // again, go through all known connections
+                    for (int j = 0; j < SIMSPACE_lstConnections->length; ++j) {
+                        sim_connection_t *innerCon = SIMSPACE_lstConnections->buffer[j];
+
+                        // skip, if were just comparing something with itself
+                        //if (outerCon == innerCon) continue;
+
+                        // go through all vector pairs of the inner con
+                        for (int jj = 0; jj < innerCon->lstVectorPairs.length; ++jj) {
+                            sim_vector_pair_t innerPair = innerCon->lstVectorPairs.buffer[jj];
+
+                            if (outerCon == innerCon && conPoint.vectorPairIndex == jj) continue;
+
+                            // check if any of the vectors match a connectable vector
+
+                            if (
+                                // OUTER connectableVector = INNER From
+                                (conPoint.position.x == innerPair.from.x) && (conPoint.position.y == innerPair.from.y)
+                                ||
+                                // OUTER connectableVector = INNER To
+                                (conPoint.position.x == innerPair.to.x) && (conPoint.position.y == innerPair.to.y)
+                                ) {
+
+                                // if that is the case
+                                // -> splitificate and mergificate
+
+                                // get the vector pair this point is on
+                                sim_vector_pair_t pairToBeSplit = outerCon->lstVectorPairs.buffer[conPoint.vectorPairIndex];
+
+                                // remove it from the vector pair list
+                                SIM_CONNECTION_VECTOR_PAIR_LIST_remove(&outerCon->lstVectorPairs, pairToBeSplit);
+
+                                // create two new vector pairs
+                                // vectorpair.from -> conPoint
+                                // cconPoint -> vectorpair.to
+                                SIM_CONNECTION_VECTOR_PAIR_LIST_append(&outerCon->lstVectorPairs, (sim_vector_pair_t){
+                                    pairToBeSplit.from,
+                                    conPoint.position
+                                });
+                                SIM_CONNECTION_VECTOR_PAIR_LIST_append(&outerCon->lstVectorPairs, (sim_vector_pair_t){
+                                    conPoint.position,
+                                    pairToBeSplit.to
+                                });
+
+                                // if outer and inner con are not the same
+                                // -> kill the inner one and absorb it into the outer
+                                if (innerCon != outerCon) {
+
+                                    // add all the inner connections vector pairs to the outer connection
+                                    for (int vpIndex = 0; vpIndex < innerCon->lstVectorPairs.length; ++vpIndex) {
+                                        SIM_CONNECTION_VECTOR_PAIR_LIST_append(&outerCon->lstVectorPairs, innerCon->lstVectorPairs.buffer[vpIndex]);
+                                    }
+
+                                    // add all the inner connections connected points to the outer connection
+                                    for (int cpIndex = 0; cpIndex < innerCon->lstConnectedPoints.length; ++cpIndex) {
+                                        SIM_COMP_LIST_appendConnectionPoint(&outerCon->lstConnectedPoints, innerCon->lstConnectedPoints.buffer[cpIndex]);
+                                    }
+
+                                    // destroy the inner connection
+                                    SIM_CONNECTION_unload(innerCon);
+                                    SIM_COMP_LIST_removeConnectionRef(SIMSPACE_lstConnections, innerCon);
+                                    free(innerCon);
+                                }
+
+
+                                // refresh the outer connection
+                                SIM_CONNECTION_refreshDrawablesStructure(outerCon);
+
+                                // set the flag and do it all again until theres nothing left to be merged
+                                hasDoneMerge = true;
+                                goto next_merge_con;
+                            }
+                        }
                     }
                 }
 

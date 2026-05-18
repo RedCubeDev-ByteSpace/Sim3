@@ -26,6 +26,24 @@ typedef struct SIM_VECTOR_RECORD {
 void SIM_VECTOR_RECORD_registerVector(sim_vector_record_t *records, Vector2 vec, int maxNum);
 
 // ---------------------------------------------------------------------------------------------------------------------
+// a dynamic list of vectors between vector pairs that other wires can connect to
+typedef struct SIM_CONNECTABLE_VECTOR {
+    Vector2 position;
+    int vectorPairIndex;
+} sim_connectable_vector_t;
+
+typedef struct SIM_CONNECTION_CONNECTABLE_VECTOR_LIST {
+    sim_connectable_vector_t *buffer;
+    uint32_t bufferSize;
+    uint32_t length;
+} sim_connection_connectable_vector_list_t;
+
+void SIM_CONNECTION_CONNECTABLE_VECTOR_LIST_init(sim_connection_connectable_vector_list_t *me);
+void SIM_CONNECTION_CONNECTABLE_VECTOR_LIST_append(sim_connection_connectable_vector_list_t *me, Vector2 vec, int vectorPairIndex);
+void SIM_CONNECTION_CONNECTABLE_VECTOR_LIST_grow(sim_connection_connectable_vector_list_t *me);
+void SIM_CONNECTION_CONNECTABLE_VECTOR_LIST_clear(sim_connection_connectable_vector_list_t *me);
+
+// ---------------------------------------------------------------------------------------------------------------------
 // A dynamic list of vector pairs making up a connection
 typedef struct SIM_CONNECTION_VECTOR_PAIR_LIST {
     sim_vector_pair_t *buffer;
@@ -66,6 +84,7 @@ typedef struct SIM_CONNECTION {
 
     sim_connection_vector_pair_list_t lstVectorPairs;
     sim_connection_drawable_list_t lstDrawables;
+    sim_connection_connectable_vector_list_t lstConnectableVectors;
 
 } sim_connection_t;
 
@@ -74,6 +93,7 @@ void SIM_CONNECTION_unload(sim_connection_t *me);
 void SIM_CONNECTION_refreshState(sim_connection_t *me);
 void SIM_CONNECTION_refreshDrawablesState(sim_connection_t *me);
 void SIM_CONNECTION_refreshDrawablesStructure(sim_connection_t *me);
+void SIM_CONNECTION_calculateConnectableVectors(sim_connection_t *me, Vector2 pointA, Vector2 pointB, int index);
 void SIM_CONNECTION_clearDrawables(sim_connection_t *me);
 
 #endif //SIM3_CONNECTION_H

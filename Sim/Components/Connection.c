@@ -3,7 +3,8 @@
 //
 #include "Connection.h"
 
-#include <stddef.h>
+#include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "../../GUI/Drawables/WireBranchingPoint.h"
@@ -13,6 +14,7 @@ void SIM_CONNECTION_init(sim_connection_t *me, Color wireColor) {
     SIM_COMP_LIST_init(&me->lstConnectedPoints);
     SIM_CONNECTION_DRAWABLE_LIST_init(&me->lstDrawables);
     SIM_CONNECTION_VECTOR_PAIR_LIST_init(&me->lstVectorPairs);
+    SIM_CONNECTION_CONNECTABLE_VECTOR_LIST_init(&me->lstConnectableVectors);
 
     me->color = wireColor;
 }
@@ -21,6 +23,7 @@ void SIM_CONNECTION_unload(sim_connection_t *me) {
     SIM_COMP_LIST_clear(&me->lstConnectedPoints);
     SIM_CONNECTION_clearDrawables(me);
     SIM_CONNECTION_VECTOR_PAIR_LIST_clear(&me->lstVectorPairs);
+    SIM_CONNECTION_CONNECTABLE_VECTOR_LIST_clear(&me->lstConnectableVectors);
 }
 
 void SIM_CONNECTION_refreshState(sim_connection_t *me) {
@@ -98,6 +101,9 @@ void SIM_CONNECTION_refreshDrawablesStructure(sim_connection_t *me) {
     // nuke everything
     SIM_CONNECTION_clearDrawables(me);
 
+    // e v e r y t h i n g
+    SIM_CONNECTION_CONNECTABLE_VECTOR_LIST_clear(&me->lstConnectableVectors);
+
     // hold a list of all used vectors to insert connection points later
     int maxNumRecords = me->lstVectorPairs.length * 2;
     sim_vector_record_t *records = calloc(maxNumRecords, sizeof(sim_vector_record_t));
@@ -113,6 +119,9 @@ void SIM_CONNECTION_refreshDrawablesStructure(sim_connection_t *me) {
         // register both vectors of this pair
         SIM_VECTOR_RECORD_registerVector(records, me->lstVectorPairs.buffer[i].from, maxNumRecords);
         SIM_VECTOR_RECORD_registerVector(records, me->lstVectorPairs.buffer[i].to, maxNumRecords);
+
+        // take note of all potential points on this line where a wire could connect to
+        SIM_CONNECTION_calculateConnectableVectors(me, me->lstVectorPairs.buffer[i].from, me->lstVectorPairs.buffer[i].to, i);
     }
 
     // go through the records and put down branching points
@@ -131,6 +140,65 @@ void SIM_CONNECTION_refreshDrawablesStructure(sim_connection_t *me) {
 
     // refresh the state
     SIM_CONNECTION_refreshState(me);
+}
+
+void SIM_CONNECTION_calculateConnectableVectors(sim_connection_t *me, Vector2 pointA, Vector2 pointB, int index) {
+
+    // if theyre the same then theres nothing for us to do
+    if (pointA.x == pointB.x && pointA.y == pointB.y) return;
+
+    // calculate the horizontal distance between the points
+    int deltaX = pointA.x - pointB.x;
+    if (deltaX < 0) deltaX = -deltaX;
+
+    // if this is a vertical line -> special case
+    if (deltaX == 0) {
+        int fromY, toY;
+        if (pointA.y > pointB.y) {
+            fromY = pointB.y;
+            toY = pointA.y;
+        }
+        else {
+            fromY = pointA.y;
+            toY = pointB.y;
+        }
+
+        for (int y = fromY + 1; y < toY; ++y) {
+
+            // add all points on the way as connectable points
+            SIM_CONNECTION_CONNECTABLE_VECTOR_LIST_append(&me->lstConnectableVectors, (Vector2){ pointA.x, y }, index);
+        }
+
+        // done
+        return;
+    }
+
+    // if its not -> actually math it out
+    Vector2 from, to;
+    if (pointA.x < pointB.x) {
+        from = pointA;
+        to = pointB;
+    }
+    else {
+        from = pointB;
+        to = pointA;
+    }
+
+    int deltaY = to.y - from.y;
+    float slope = (float)deltaY / (float)deltaX;
+
+    for (int x = 1; x < deltaX; ++x) {
+
+        float y = x * slope;
+
+        // if this is a whole number point
+        if (y == roundf(y)) {
+
+            // add it to the connectables
+            SIM_CONNECTION_CONNECTABLE_VECTOR_LIST_append(&me->lstConnectableVectors, (Vector2){ from.x + x, from.y + y }, index);
+        }
+
+    }
 }
 
 void SIM_VECTOR_RECORD_registerVector(sim_vector_record_t *records, Vector2 vec, int maxNum) {
@@ -162,4 +230,43 @@ void SIM_CONNECTION_clearDrawables(sim_connection_t *me) {
 
     // clear the buffer
     SIM_CONNECTION_DRAWABLE_LIST_clear(&me->lstDrawables);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+void SIM_CONNECTION_CONNECTABLE_VECTOR_LIST_init(sim_connection_connectable_vector_list_t *me) {
+    me->buffer = NULL;
+    me->bufferSize = 0;
+    me->length = 0;
+}
+
+void SIM_CONNECTION_CONNECTABLE_VECTOR_LIST_append(sim_connection_connectable_vector_list_t *me, Vector2 vec, int vectorPairIndex) {
+    // grow the list to make space for this entry
+    SIM_CONNECTION_CONNECTABLE_VECTOR_LIST_grow(me);
+
+    // assign this entry to the new slot
+    me->buffer[me->length - 1] = (sim_connectable_vector_t){ vec, vectorPairIndex };
+}
+
+void SIM_CONNECTION_CONNECTABLE_VECTOR_LIST_grow(sim_connection_connectable_vector_list_t *me) {
+    me->length++;
+    if (me->length <= me->bufferSize) return; // theres still enough space in the buffer
+
+    // otherwise: grow the buffer
+    me->bufferSize += 5;
+    sim_connectable_vector_t *newBuffer = realloc(me->buffer, me->bufferSize * sizeof(sim_connectable_vector_t));
+
+    if (newBuffer == NULL) {
+        printf("SIM_CONNECTION_CONNECTABLE_VECTOR_LIST_grow: this is fucked");
+        me->bufferSize -= 5;
+        return;
+    }
+
+    me->buffer = newBuffer;
+}
+
+void SIM_CONNECTION_CONNECTABLE_VECTOR_LIST_clear(sim_connection_connectable_vector_list_t *me) {
+    free(me->buffer);
+    me->buffer = NULL;
+    me->bufferSize = 0;
+    me->length = 0;
 }

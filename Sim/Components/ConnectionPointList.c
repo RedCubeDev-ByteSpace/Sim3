@@ -128,7 +128,7 @@ void SIM_CONNECTION_VECTOR_PAIR_LIST_grow(sim_connection_vector_pair_list_t *me)
 
 void SIM_CONNECTION_VECTOR_PAIR_LIST_shrink(sim_connection_vector_pair_list_t *me) {
     me->length--;
-    if (me->length > me->bufferSize - 5) return; // nothing to shrink yet
+    if (me->length >= me->bufferSize - 5) return; // nothing to shrink yet
 
     // otherwise: shrinkificate
     me->bufferSize -= 5;
