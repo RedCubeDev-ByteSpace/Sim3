@@ -38,10 +38,18 @@ void INPUT_process() {
         GRID_cameraPos.x += GRID_cameraOffset.x;
         GRID_cameraPos.y += GRID_cameraOffset.y;
         GRID_cameraOffset = (Vector2){0, 0};
+
+        GRID_drawMovementTrails = false;
+        GRID_prevCameraOffset = GRID_cameraOffset;
+        GRID_prevCameraPos = GRID_cameraPos;
     }
 
     if (isDragging) {
         Vector2 currentMousePos = GetMousePosition();
+
+        GRID_drawMovementTrails = true;
+        GRID_prevCameraOffset = GRID_cameraOffset;
+
         GRID_cameraOffset = (Vector2) {
             currentMousePos.x - dragBegin.x,
             currentMousePos.y - dragBegin.y
@@ -70,6 +78,12 @@ void INPUT_process() {
     // smooth zoom lerpin'
     if (targetZoom != GRID_zoom) {
 
+        // draw some connection lines for zooming to be less confusing
+        GRID_drawMovementTrails = true;
+        GRID_prevCameraPos = GRID_cameraPos;
+        GRID_prevZoom = GRID_zoom;
+
+
         // hihi, haha, some vector math for nice zooming :)
 
         // convert the mouse pos into world space with the current zoom
@@ -93,6 +107,10 @@ void INPUT_process() {
         // end this madness when were close enough
         if (fabsf(GRID_zoom - targetZoom) < ZOOM_LERP_CUTOFF) {
             GRID_zoom = targetZoom;
+        }
+
+        if (GRID_drawMovementTrails && fabsf(GRID_zoom - targetZoom) < ZOOM_TRAIL_CUTOFF) {
+            GRID_drawMovementTrails = false;
         }
     }
 

@@ -4,6 +4,7 @@
 #include "raylib.h"
 #include "GUI.h"
 
+#include <math.h>
 #include <stddef.h>
 
 #include "Grid.h"
@@ -33,6 +34,13 @@ Vector2 LIB_worldSpaceToScreenSpace(Vector2 worldSpace) {
     };
 }
 
+Vector2 LIB_worldSpaceToScreenSpacePrev(Vector2 worldSpace) {
+    return (Vector2){
+        (worldSpace.x * GRID_SPACING * GRID_prevZoom + GRID_prevCameraPos.x + GRID_prevCameraOffset.x),
+        (worldSpace.y * GRID_SPACING * GRID_prevZoom + GRID_prevCameraPos.y + GRID_prevCameraOffset.y)
+    };
+}
+
 Vector2 LIB_screenSpaceToWorldSpace(Vector2 screenSpace) {
     return (Vector2){
         (screenSpace.x - GRID_cameraPos.x - GRID_cameraOffset.x) / (GRID_SPACING * GRID_zoom),
@@ -57,4 +65,8 @@ Vector2 LIB_roundificateToWholePoint(Vector2 pos) {
     else if (pos.y < 0) pos.y = (int)(pos.y - 0.5f);
 
     return pos;
+}
+
+float LIB_getVectorLen(Vector2 vec) {
+    return sqrtf(vec.x * vec.x + vec.y * vec.y);
 }

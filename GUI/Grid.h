@@ -17,4 +17,9 @@ extern float GRID_zoom;
 extern Vector2 GRID_cameraPos;
 extern Vector2 GRID_cameraOffset;
 
+extern bool GRID_drawMovementTrails;
+extern float GRID_prevZoom;
+extern Vector2 GRID_prevCameraPos;
+extern Vector2 GRID_prevCameraOffset;
+
 #endif //SIM3_GRID_H
