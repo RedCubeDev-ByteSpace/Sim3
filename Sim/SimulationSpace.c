@@ -159,11 +159,13 @@ void SIMSPACE_mergeOverlappingConnections() {
                                 // cconPoint -> vectorpair.to
                                 SIM_CONNECTION_VECTOR_PAIR_LIST_append(&outerCon->lstVectorPairs, (sim_vector_pair_t){
                                     pairToBeSplit.from,
-                                    conPoint.position
+                                    conPoint.position,
+                                    pairToBeSplit.color
                                 });
                                 SIM_CONNECTION_VECTOR_PAIR_LIST_append(&outerCon->lstVectorPairs, (sim_vector_pair_t){
                                     conPoint.position,
-                                    pairToBeSplit.to
+                                    pairToBeSplit.to,
+                                    pairToBeSplit.color
                                 });
 
                                 // if outer and inner con are not the same
@@ -185,7 +187,6 @@ void SIMSPACE_mergeOverlappingConnections() {
                                     SIM_COMP_LIST_removeConnectionRef(SIMSPACE_lstConnections, innerCon);
                                     free(innerCon);
                                 }
-
 
                                 // refresh the outer connection
                                 SIM_CONNECTION_refreshDrawablesStructure(outerCon);

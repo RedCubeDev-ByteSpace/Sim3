@@ -15,7 +15,7 @@ typedef struct SIM_LED {
 
 } sim_led_t;
 
-void SIM_LED_init(sim_led_t *me, Vector2 position);
+void SIM_LED_init(sim_led_t *me, Vector2 position, int rotation);
 void SIM_LED_refreshDrawable(sim_led_t *me);
 void SIM_LED_unload(sim_led_t *me);
 

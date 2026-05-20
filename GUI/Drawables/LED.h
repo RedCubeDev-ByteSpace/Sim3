@@ -12,10 +12,11 @@ typedef struct DRW_LED {
 
     Vector2 position;
     bool on;
+    int rotation;
 
 } drw_led_t;
 
-void DRAWABLES_LED_init(drw_led_t *me, Vector2 pos);
+void DRAWABLES_LED_init(drw_led_t *me, Vector2 pos, int rotation);
 void DRAWABLES_LED_draw(drw_led_t *me);
 Rectangle DRAWABLES_LED_getInteractionRect(drw_led_t *me);
 

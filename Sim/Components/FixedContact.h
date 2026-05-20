@@ -16,7 +16,7 @@ typedef struct SIM_FIXED_CONTACT {
 
 } sim_fixed_contact_t;
 
-void SIM_FIXED_CONTACT_init(sim_fixed_contact_t *me, Vector2 position, bool state);
+void SIM_FIXED_CONTACT_init(sim_fixed_contact_t *me, Vector2 position, bool state, int rotation);
 void SIM_FIXED_CONTACT_refreshDrawable(sim_fixed_contact_t *me);
 void SIM_FIXED_CONTACT_unload(sim_fixed_contact_t *me);
 

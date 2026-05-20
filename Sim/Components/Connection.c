@@ -9,14 +9,12 @@
 
 #include "../../GUI/Drawables/WireBranchingPoint.h"
 
-void SIM_CONNECTION_init(sim_connection_t *me, Color wireColor) {
+void SIM_CONNECTION_init(sim_connection_t *me) {
 
     SIM_COMP_LIST_init(&me->lstConnectedPoints);
     SIM_CONNECTION_DRAWABLE_LIST_init(&me->lstDrawables);
     SIM_CONNECTION_VECTOR_PAIR_LIST_init(&me->lstVectorPairs);
     SIM_CONNECTION_CONNECTABLE_VECTOR_LIST_init(&me->lstConnectableVectors);
-
-    me->color = wireColor;
 }
 
 void SIM_CONNECTION_unload(sim_connection_t *me) {
@@ -110,18 +108,20 @@ void SIM_CONNECTION_refreshDrawablesStructure(sim_connection_t *me) {
 
     // and then build it again
     for (int i = 0; i < me->lstVectorPairs.length; ++i) {
+        sim_vector_pair_t vecPair = me->lstVectorPairs.buffer[i];
+
         // create a new wire
         drw_wire_t *newWire = malloc(sizeof(drw_wire_t));
-        DRAWABLES_WIRE_init(newWire, me->lstVectorPairs.buffer[i].from, me->lstVectorPairs.buffer[i].to, me->color);
+        DRAWABLES_WIRE_init(newWire, vecPair.from, vecPair.to, vecPair.color);
         DRAWABLES_enqueue((drawable_t*)newWire);
         SIM_CONNECTION_DRAWABLE_LIST_add(&me->lstDrawables, (drawable_t*)newWire);
 
         // register both vectors of this pair
-        SIM_VECTOR_RECORD_registerVector(records, me->lstVectorPairs.buffer[i].from, maxNumRecords);
-        SIM_VECTOR_RECORD_registerVector(records, me->lstVectorPairs.buffer[i].to, maxNumRecords);
+        SIM_VECTOR_RECORD_registerVector(records, vecPair.from, vecPair.color, maxNumRecords);
+        SIM_VECTOR_RECORD_registerVector(records, vecPair.to, vecPair.color, maxNumRecords);
 
         // take note of all potential points on this line where a wire could connect to
-        SIM_CONNECTION_calculateConnectableVectors(me, me->lstVectorPairs.buffer[i].from, me->lstVectorPairs.buffer[i].to, i);
+        SIM_CONNECTION_calculateConnectableVectors(me, vecPair.from, vecPair.to, i);
     }
 
     // go through the records and put down branching points
@@ -130,7 +130,7 @@ void SIM_CONNECTION_refreshDrawablesStructure(sim_connection_t *me) {
         if (records[i].amount < 3) continue;
 
         drw_wire_branching_point_t *branchingPoint = malloc(sizeof(drw_wire_branching_point_t));
-        DRAWABLES_WIRE_BRANCHING_POINT_init(branchingPoint, records[i].vec, me->color);
+        DRAWABLES_WIRE_BRANCHING_POINT_init(branchingPoint, records[i].vec, records[i].color);
         DRAWABLES_enqueue((drawable_t*)branchingPoint);
         SIM_CONNECTION_DRAWABLE_LIST_add(&me->lstDrawables, (drawable_t*)branchingPoint);
     }
@@ -201,13 +201,14 @@ void SIM_CONNECTION_calculateConnectableVectors(sim_connection_t *me, Vector2 po
     }
 }
 
-void SIM_VECTOR_RECORD_registerVector(sim_vector_record_t *records, Vector2 vec, int maxNum) {
+void SIM_VECTOR_RECORD_registerVector(sim_vector_record_t *records, Vector2 vec, Color color, int maxNum) {
     for (int i = 0; i < maxNum; ++i) {
 
         // if we reached a free slot -> were at the end of the list
         // the vector wasnt found so well create a new record for it
         if (records[i].amount == 0) {
             records[i].vec = vec;
+            records[i].color = color;
             records[i].amount = 1;
             return;
         }

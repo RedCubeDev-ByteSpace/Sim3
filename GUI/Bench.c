@@ -16,7 +16,9 @@
 
 // ---------------------------------------------------------------------------------------------------------------------
 bench_working_mode_t BENCH_benchMode;
-float rotation;
+float cursorRotation;
+int pieceRotation;
+int activeColor;
 // ---------------------------------------------------------------------------------------------------------------------
 // Data for wire drawing mode
 Vector2 attachmentVertex;
@@ -35,16 +37,18 @@ drw_chip_t *newChip;
 
 void BENCH_init() {
     BENCH_benchMode = IDLE;
-    rotation = 0;
+    cursorRotation = 0;
+    pieceRotation = 0;
+    activeColor = 0;
 
     thisConnection = NULL;
     hasAttachmentVertex = false;
 
     newContact = malloc(sizeof(drw_fixed_contact_t));
-    DRAWABLES_FIXED_CONTACT_init(newContact, (Vector2){0,0}, false);
+    DRAWABLES_FIXED_CONTACT_init(newContact, (Vector2){0,0}, false, 0);
 
     newLED = malloc(sizeof(drw_led_t));
-    DRAWABLES_LED_init(newLED, (Vector2){0,0});
+    DRAWABLES_LED_init(newLED, (Vector2){0,0}, 0);
 
     newChip = malloc(sizeof(drw_chip_t));
     DRAWABLES_CHIP_init(newChip, (Vector2){0,0}, SIMRES_chipSpecifications[0].name, SIMRES_chipSpecifications[0].function, SIMRES_chipSpecifications[0].numPins / 2);
@@ -60,6 +64,13 @@ void BENCH_process() {
     // ESC shortcut to exit out of all modes
     if (IsKeyReleased(KEY_ESCAPE)) {
         BENCH_benchMode = IDLE;
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // Q rotatificates rotatable objects
+    if (IsKeyReleased(KEY_Q)) {
+        pieceRotation++;
+        pieceRotation = pieceRotation % 4;
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -153,6 +164,14 @@ void BENCH_process() {
 
             return;
         }
+
+        // Color buttons!!!
+        for (int i = 0; i < NUM_COLORS; ++i) {
+            if (LIB_IsVector2InRectangle(mousePos, (Rectangle){i*35 + 40, 5, 30, 30})) {
+                activeColor = i;
+                return;
+            }
+        }
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -211,7 +230,7 @@ void BENCH_process() {
 
                 // no connection yet -> create a new one
                 thisConnection = malloc(sizeof(sim_connection_t));
-                SIM_CONNECTION_init(thisConnection, wireColors[0]);
+                SIM_CONNECTION_init(thisConnection);
 
                 // use it as attachment
                 attachmentVertex = wpos;
@@ -252,7 +271,7 @@ void BENCH_process() {
             }
 
             // append a new vector pair!
-            SIM_CONNECTION_VECTOR_PAIR_LIST_append(&thisConnection->lstVectorPairs, (sim_vector_pair_t){attachmentVertex, wpos});
+            SIM_CONNECTION_VECTOR_PAIR_LIST_append(&thisConnection->lstVectorPairs, (sim_vector_pair_t){attachmentVertex, wpos, wireColors[activeColor]});
             if (conPoint != NULL) {
                 SIM_COMP_LIST_appendConnectionPoint(&thisConnection->lstConnectedPoints, conPoint);
             }
@@ -261,7 +280,7 @@ void BENCH_process() {
             SIM_CONNECTION_refreshDrawablesStructure(thisConnection);
 
             // if this was a right click -> directly add this vertex as the new attachment point
-            if (IsMouseButtonReleased(MOUSE_BUTTON_RIGHT) && conPoint == NULL) {
+            if (IsMouseButtonReleased(MOUSE_BUTTON_RIGHT)) {
                 attachmentVertex = wpos;
             }
             // otherwise: just finish this wire
@@ -290,7 +309,7 @@ void BENCH_process() {
 
             // create a new fixed contact at this position
             sim_fixed_contact_t *contact = malloc(sizeof(sim_fixed_contact_t));
-            SIM_FIXED_CONTACT_init(contact, wpos, false);
+            SIM_FIXED_CONTACT_init(contact, wpos, false, pieceRotation);
             SIM_COMP_LIST_appendFixedContact(SIMSPACE_lstFixedContacts, contact);
         }
     }
@@ -311,7 +330,7 @@ void BENCH_process() {
 
             // create a new fixed contact at this position
             sim_led_t *led = malloc(sizeof(sim_led_t));
-            SIM_LED_init(led, wpos);
+            SIM_LED_init(led, wpos, pieceRotation);
             SIM_COMP_LIST_appendLED(SIMSPACE_lstLEDs, led);
         }
     }
@@ -458,8 +477,8 @@ void BENCH_process() {
 
 void BENCH_draw() {
 
-    rotation += GetFrameTime() * 2;
-    rotation = rotation > 360 ? 0 : rotation;
+    cursorRotation += GetFrameTime() * 2;
+    cursorRotation = cursorRotation > 360 ? 0 : cursorRotation;
 
     Vector2 mousePos = GetMousePosition();
     Vector2 pos = LIB_screenSpaceToWorldSpace(mousePos);
@@ -469,19 +488,22 @@ void BENCH_draw() {
     // Draw Cursors
 
     Vector2 wpos = LIB_worldSpaceToScreenSpace(pos);
+    Color workingColor = wireColors[activeColor];
     switch (BENCH_benchMode) {
         case DRAWING_WIRE:
-            DrawLineEx((Vector2){wpos.x + cos(rotation) * CURSOR_WIDTH, wpos.y + sin(rotation) * CURSOR_WIDTH}, (Vector2){wpos.x - cos(rotation) * CURSOR_WIDTH, wpos.y - sin(rotation) * CURSOR_WIDTH}, CURSOR_THICKNESS, wireColors[0]);
-            DrawLineEx((Vector2){wpos.x + cos(rotation + PI/2) * CURSOR_WIDTH, wpos.y + sin(rotation + PI/2) * CURSOR_WIDTH}, (Vector2){wpos.x - cos(rotation + PI/2) * CURSOR_WIDTH, wpos.y - sin(rotation + PI/2) * CURSOR_WIDTH}, CURSOR_THICKNESS, wireColors[0]);
+            DrawLineEx((Vector2){wpos.x + cos(cursorRotation) * CURSOR_WIDTH, wpos.y + sin(cursorRotation) * CURSOR_WIDTH}, (Vector2){wpos.x - cos(cursorRotation) * CURSOR_WIDTH, wpos.y - sin(cursorRotation) * CURSOR_WIDTH}, CURSOR_THICKNESS, workingColor);
+            DrawLineEx((Vector2){wpos.x + cos(cursorRotation + PI/2) * CURSOR_WIDTH, wpos.y + sin(cursorRotation + PI/2) * CURSOR_WIDTH}, (Vector2){wpos.x - cos(cursorRotation + PI/2) * CURSOR_WIDTH, wpos.y - sin(cursorRotation + PI/2) * CURSOR_WIDTH}, CURSOR_THICKNESS, workingColor);
             break;
 
         case PLACE_FIXED_CONTACT:
             newContact->position = pos;
+            newContact->rotation = pieceRotation;
             DRAWABLES_FIXED_CONTACT_draw(newContact);
             break;
 
         case PLACE_LED:
             newLED->position = pos;
+            newLED->rotation = pieceRotation;
             DRAWABLES_LED_draw(newLED);
             break;
 
@@ -491,13 +513,13 @@ void BENCH_draw() {
             break;
 
         case DELETION:
-            DrawLineEx((Vector2){wpos.x + cos(rotation) * CURSOR_WIDTH, wpos.y + sin(rotation) * CURSOR_WIDTH}, (Vector2){wpos.x - cos(rotation) * CURSOR_WIDTH, wpos.y - sin(rotation) * CURSOR_WIDTH}, CURSOR_THICKNESS, wireColors[0]);
-            DrawLineEx((Vector2){wpos.x + cos(-rotation - PI/2) * CURSOR_WIDTH, wpos.y + sin(-rotation - PI/2) * CURSOR_WIDTH}, (Vector2){wpos.x - cos(-rotation - PI/2) * CURSOR_WIDTH, wpos.y - sin(-rotation - PI/2) * CURSOR_WIDTH}, CURSOR_THICKNESS, wireColors[0]);
+            DrawLineEx((Vector2){wpos.x + cos(cursorRotation) * CURSOR_WIDTH, wpos.y + sin(cursorRotation) * CURSOR_WIDTH}, (Vector2){wpos.x - cos(cursorRotation) * CURSOR_WIDTH, wpos.y - sin(cursorRotation) * CURSOR_WIDTH}, CURSOR_THICKNESS, workingColor);
+            DrawLineEx((Vector2){wpos.x + cos(-cursorRotation - PI/2) * CURSOR_WIDTH, wpos.y + sin(-cursorRotation - PI/2) * CURSOR_WIDTH}, (Vector2){wpos.x - cos(-cursorRotation - PI/2) * CURSOR_WIDTH, wpos.y - sin(-cursorRotation - PI/2) * CURSOR_WIDTH}, CURSOR_THICKNESS, workingColor);
             break;
 
         default:
-            DrawLineEx((Vector2){mousePos.x, mousePos.y - CURSOR_WIDTH}, (Vector2){mousePos.x, mousePos.y + CURSOR_WIDTH}, CURSOR_THICKNESS, wireColors[0]);
-            DrawLineEx((Vector2){mousePos.x - CURSOR_WIDTH, mousePos.y}, (Vector2){mousePos.x + CURSOR_WIDTH, mousePos.y}, CURSOR_THICKNESS, wireColors[0]);
+            DrawLineEx((Vector2){mousePos.x, mousePos.y - CURSOR_WIDTH}, (Vector2){mousePos.x, mousePos.y + CURSOR_WIDTH}, CURSOR_THICKNESS, workingColor);
+            DrawLineEx((Vector2){mousePos.x - CURSOR_WIDTH, mousePos.y}, (Vector2){mousePos.x + CURSOR_WIDTH, mousePos.y}, CURSOR_THICKNESS, workingColor);
             break;
     }
 
@@ -515,6 +537,8 @@ void BENCH_draw() {
 
     // ---------------------------
     // Line mode button
+    int lineButtonY = anchorY;
+
     bool fillLineButton = BENCH_benchMode == DRAWING_WIRE || IsKeyDown(KEY_ESCAPE);
     DrawRectangleRounded((Rectangle){
         5, anchorY + 5, 30, 30
@@ -629,5 +653,24 @@ void BENCH_draw() {
         DrawTextEx(GUI_computerModern20, SIMRES_chipSpecifications[i].function, (Vector2){ GUI_WindowSize.x - width - 5 + width / 2 - size.x / 2, anchorY + 18 }, 16, 1, !selected ? BLACK : WHITE);
 
         anchorY += 35;
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // If in line mode: draw the color selection thingamabob
+    if (BENCH_benchMode == DRAWING_WIRE) {
+        for (int i = 0; i < NUM_COLORS; ++i) {
+            bool fillColorButton = activeColor == i;
+            int offsetX = 35 + 35 * i;
+
+            DrawRectangleRounded((Rectangle){
+                offsetX + 5, lineButtonY + 5, 30, 30
+            }, 0.1f, 3, fillColorButton ? BLACK : WHITE);
+
+            DrawCircle(offsetX + 20, lineButtonY + 20, 10, wireColors[i]);
+
+            DrawRectangleRoundedLines((Rectangle){
+                offsetX + 5, lineButtonY + 5, 30, 30
+            }, 0.1f, 3, 1, BLACK);
+        }
     }
 }

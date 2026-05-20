@@ -13,10 +13,11 @@ typedef struct DRW_FIXED_CONTACT {
 
     bool high;
     Vector2 position;
+    int rotation;
 
 } drw_fixed_contact_t;
 
-void DRAWABLES_FIXED_CONTACT_init(drw_fixed_contact_t *me, Vector2 pos, bool high);
+void DRAWABLES_FIXED_CONTACT_init(drw_fixed_contact_t *me, Vector2 pos, bool high, int rotation);
 void DRAWABLES_FIXED_CONTACT_draw(drw_fixed_contact_t *me);
 Rectangle DRAWABLES_FIXED_CONTACT_getInteractionRect(drw_fixed_contact_t *me);
 

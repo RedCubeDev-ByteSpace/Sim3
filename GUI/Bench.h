@@ -6,7 +6,6 @@
 #define SIM3_BENCH_H
 #include "raylib.h"
 
-#define NUM_COLORS 10
 #define CURSOR_WIDTH 10
 #define CURSOR_THICKNESS 1.5f
 
@@ -20,11 +19,17 @@ typedef enum BENCH_WORKING_MODE {
     DELETION,
 } bench_working_mode_t;
 
+#define NUM_COLORS 9
 static Color wireColors[] = {
-    (Color){11, 57, 84, 255},
-    (Color){8, 126, 139, 255},
-    (Color){255, 90, 95, 255},
-    (Color){200, 29, 37, 255},
+    (Color){ 84, 110, 122, 255}, // Slate Gray    #546E7A
+    (Color){198,  40,  40, 255}, // Deep Red      #C62828
+    (Color){239, 108,   0, 255}, // Burnt Orange  #EF6C00
+    (Color){249, 168,  37, 255}, // Golden Yellow #F9A825
+    (Color){ 46, 125,  50, 255}, // Emerald Green #2E7D32
+    (Color){  0, 137, 123, 255}, // Teal          #00897B
+    (Color){ 21, 101, 192, 255}, // Royal Blue    #1565C0
+    (Color){ 57,  73, 171, 255}, // Indigo        #3949AB
+    (Color){142,  36, 170, 255}, // Violet        #8E24AA
 };
 
 extern bench_working_mode_t BENCH_benchMode;

@@ -16,14 +16,16 @@
 typedef struct SIM_VECTOR_PAIR {
     Vector2 from;
     Vector2 to;
+    Color color;
 } sim_vector_pair_t;
 
 typedef struct SIM_VECTOR_RECORD {
     Vector2 vec;
+    Color color;
     int amount;
 } sim_vector_record_t;
 
-void SIM_VECTOR_RECORD_registerVector(sim_vector_record_t *records, Vector2 vec, int maxNum);
+void SIM_VECTOR_RECORD_registerVector(sim_vector_record_t *records, Vector2 vec, Color color, int maxNum);
 
 // ---------------------------------------------------------------------------------------------------------------------
 // a dynamic list of vectors between vector pairs that other wires can connect to
@@ -78,7 +80,6 @@ typedef struct SIM_CONNECTION {
 
     sim_connectionpoint_list_t lstConnectedPoints;
 
-    Color color;
     bool active;
     bool error;
 
@@ -88,7 +89,7 @@ typedef struct SIM_CONNECTION {
 
 } sim_connection_t;
 
-void SIM_CONNECTION_init(sim_connection_t *me, Color wireColor);
+void SIM_CONNECTION_init(sim_connection_t *me);
 void SIM_CONNECTION_unload(sim_connection_t *me);
 void SIM_CONNECTION_refreshState(sim_connection_t *me);
 void SIM_CONNECTION_refreshDrawablesState(sim_connection_t *me);

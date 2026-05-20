@@ -6,13 +6,13 @@
 #include "../SimulationSpace.h"
 #include <stdlib.h>
 
-void SIM_LED_init(sim_led_t *me, Vector2 position) {
+void SIM_LED_init(sim_led_t *me, Vector2 position, int rotation) {
 
     // initialize the contact point
     SIM_CONNECTION_POINT_init(&me->point, CONNECTION_POINT_FLOATING, position);
 
     me->led = malloc(sizeof(drw_led_t));
-    DRAWABLES_LED_init(me->led, me->point.position);
+    DRAWABLES_LED_init(me->led, me->point.position, rotation);
     DRAWABLES_enqueue((drawable_t*)me->led);
 
     SIM_CONNECTION_POINT_autoConnectWires(&me->point);
