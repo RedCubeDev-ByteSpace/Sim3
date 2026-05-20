@@ -58,6 +58,9 @@ void DRAWABLES_CHIP_drawPin(Vector2 pos, bool isTopRow, sim_pin_display_state_t 
         case PIN_DISP_POWER:
             DrawCircle(pos.x, pos.y, 1 * GRID_zoom, BLACK);
             break;
+        case PIN_DISP_CLOCK:
+            DrawCircleLines(pos.x, pos.y, 1 * GRID_zoom, BLACK);
+            break;
         case PIN_DISP_INPUT:
             if (!isTopRow) {
                 DrawTriangle(

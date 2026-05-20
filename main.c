@@ -7,6 +7,7 @@
 #include "GUI/Input.h"
 #include "Sim/SimulationResources.h"
 #include "Sim/SimulationSpace.h"
+#include "Sim/SaveAndLoad.h"
 
 int main(void) {
     printf("HELLORLD!\n");
@@ -26,6 +27,7 @@ int main(void) {
     DRAWABLES_init();
     BENCH_init();
     SIMSPACE_init();
+    SAVE_AND_LOAD_init();
 
     // main draw loop
     while (!WindowShouldClose()) {

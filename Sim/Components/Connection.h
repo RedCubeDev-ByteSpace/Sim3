@@ -5,6 +5,7 @@
 #ifndef SIM3_CONNECTION_H
 #define SIM3_CONNECTION_H
 #include <stdint.h>
+#include <json-c/json_object.h>
 
 #include "raylib.h"
 #include "../SimLists/SimspaceLists.h"

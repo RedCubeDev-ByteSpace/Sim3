@@ -1,5 +1,6 @@
 [
   {
+    "ID": "SIM3-74LS00",
     "Name": "74LS00",
     "Function": "4x 2-Input-NAND",
     "Pins": 14,
@@ -18,6 +19,7 @@
     }
   },
   {
+    "ID": "SIM3-74LS02",
     "Name": "74LS02",
     "Function": "4x 2-Input-NOR",
     "Pins": 14,
@@ -33,6 +35,26 @@
     "Lua": {
       "Script": "74LS02.lua",
       "IsStateful": false
+    }
+  },
+  {
+    "ID": "SIM3-74LS161",
+    "Name": "74LS161",
+    "Function": "4-Bit Counter",
+    "Pins": 16,
+    "Inputs": [
+      1, 2, 3, 4, 5, 6, 7, 9, 10
+    ],
+    "Outputs": [
+      11, 12, 13, 15, 15
+    ],
+    "Power": [
+      8, 16
+    ],
+    "Lua": {
+      "Script": "74LS161.lua",
+      "IsStateful": true,
+      "ClockPin": 2
     }
   }
 ]

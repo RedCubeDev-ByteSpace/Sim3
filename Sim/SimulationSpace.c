@@ -206,5 +206,37 @@ void SIMSPACE_mergeOverlappingConnections() {
         next_merge_con:
         if (!hasDoneMerge) break;
     }
+}
 
+// connect connections to any connection points they share a vector with
+void SIMSPACE_autoconnectToConnectionPoints() {
+
+    // go through all connections
+    for (int conIdx = 0; conIdx < SIMSPACE_lstConnections->length; ++conIdx) {
+        sim_connection_t *con = SIMSPACE_lstConnections->buffer[conIdx];
+
+        // purge the current connected points list
+        SIM_COMP_LIST_clear(&con->lstConnectedPoints);
+
+        // go through all vector pairs making up this connection
+        for (int vpIndex = 0; vpIndex < con->lstVectorPairs.length; ++vpIndex) {
+
+            Vector2 from = con->lstVectorPairs.buffer[vpIndex].from;
+            Vector2 to   = con->lstVectorPairs.buffer[vpIndex].to;
+
+            // go through all known connection points
+            for (int cpIndex = 0; cpIndex < SIMSPACE_lstConnectionPoints->length; ++cpIndex) {
+                sim_connection_point_t *conPoint = SIMSPACE_lstConnectionPoints->buffer[cpIndex];
+
+                // check if either the from or to vector touches it
+                if (
+                    (from.x == conPoint->position.x && from.y == conPoint->position.y)
+                    ||
+                    (to.x == conPoint->position.x && to.y == conPoint->position.y)
+                ) {
+                    SIM_COMP_LIST_appendConnectionPoint(&con->lstConnectedPoints, conPoint);
+                }
+            }
+        }
+    }
 }

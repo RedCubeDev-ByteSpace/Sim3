@@ -13,6 +13,7 @@
 #include "../Sim/SimulationSpace.h"
 #include "Drawables/Wire.h"
 #include "../Sim/Components/Connection.h"
+#include "../Sim/SaveAndLoad.h"
 
 // ---------------------------------------------------------------------------------------------------------------------
 bench_working_mode_t BENCH_benchMode;
@@ -71,6 +72,12 @@ void BENCH_process() {
     if (IsKeyReleased(KEY_Q)) {
         pieceRotation++;
         pieceRotation = pieceRotation % 4;
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // CTRL + S saves this file
+    if ((IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) && IsKeyReleased(KEY_S)) {
+        SAVE_AND_LOAD_saveSimspace();
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -350,7 +357,7 @@ void BENCH_process() {
                 }
             }
 
-            // create a new fixed contact at this position
+            // create a new chip at this position
             sim_chip_t *chip = malloc(sizeof(sim_chip_t));
             SIM_CHIP_init(chip, wpos, &SIMRES_chipSpecifications[selectedChip]);
             SIM_COMP_LIST_appendChip(SIMSPACE_lstChips, chip);

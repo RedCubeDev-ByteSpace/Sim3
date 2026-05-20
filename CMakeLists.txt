@@ -3,8 +3,8 @@ project(sim3 C)
 
 set(CMAKE_C_STANDARD 11)
 
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -fno-omit-frame-pointer -g")
-#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -fno-omit-frame-pointer -g")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
 
 link_libraries(raylib m json-c lua)
 add_executable(sim3 main.c
@@ -46,4 +46,8 @@ add_executable(sim3 main.c
         GUI/Drawables/LED.h
         Sim/Components/LED.c
         Sim/Components/LED.h
-        Sim/Components/ChipSpecEnums.h)
+        Sim/Components/ChipSpecEnums.h
+        Sim/SaveAndLoad.c
+        Sim/SaveAndLoad.h
+        Sim/Json/Serialization.c
+        Sim/Json/Deserialization.c)

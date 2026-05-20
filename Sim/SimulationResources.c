@@ -27,12 +27,15 @@ void SIMRES_init() {
         json_object *myEntry = json_object_array_get_idx(listOfChips, i);
 
         // -------------------------------------------------------------------------------------------------------------
-        // copy over the name and function string
+        // copy over the id, name and function string
+        const char *id = json_object_get_string(json_object_object_get(myEntry, "ID"));
         const char *name = json_object_get_string(json_object_object_get(myEntry, "Name"));
         const char *function = json_object_get_string(json_object_object_get(myEntry, "Function"));
 
+        me->id = malloc(strlen(id) + 1);
         me->name = malloc(strlen(name) + 1);
         me->function = malloc(strlen(function) + 1);
+        strcpy(me->id, id);
         strcpy(me->name, name);
         strcpy(me->function, function);
 
@@ -79,6 +82,12 @@ void SIMRES_init() {
         // remember if this chip is stateless or stateful
         // -> this determins on if its called via a step() or stepRising() and stepFalling() call
         me->isStateful = json_object_get_boolean(json_object_object_get(lua, "IsStateful"));
+
+        // if it is stateful -> which pin is the clock?
+        if (me->isStateful) {
+            me->clockPin = json_object_get_int(json_object_object_get(lua, "ClockPin")) - 1;
+            me->pinSpecs[me->clockPin] = PIN_CLOCK;
+        }
     }
 
     for (int i = 0; i < SIMRES_numChipSpecs; ++i) {

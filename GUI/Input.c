@@ -39,6 +39,7 @@ void INPUT_process() {
         GRID_cameraPos.y += GRID_cameraOffset.y;
         GRID_cameraOffset = (Vector2){0, 0};
 
+        // stop any trail drawing
         GRID_drawMovementTrails = false;
         GRID_prevCameraOffset = GRID_cameraOffset;
         GRID_prevCameraPos = GRID_cameraPos;
@@ -47,6 +48,7 @@ void INPUT_process() {
     if (isDragging) {
         Vector2 currentMousePos = GetMousePosition();
 
+        // draw the difference between where points were the last frame and this frame
         GRID_drawMovementTrails = true;
         GRID_prevCameraOffset = GRID_cameraOffset;
 
