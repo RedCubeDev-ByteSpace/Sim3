@@ -16,7 +16,7 @@ void SIM_CHIP_init(sim_chip_t *me, Vector2 position, sim_chip_specification_t *c
 
     // create the chip drawable for this component
     me->chip = malloc(sizeof(drw_chip_t));
-    DRAWABLES_CHIP_init(me->chip, position, chipSpec->name, chipSpec->function, chipSpec->numPins / 2);
+    DRAWABLES_CHIP_init(me->chip, position, chipSpec, chipSpec->numPins / 2);
     DRAWABLES_enqueue((drawable_t*)me->chip);
 
     // create all connection points

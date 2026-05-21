@@ -4,11 +4,21 @@
     "Name": "74LS00",
     "Function": "4x 2-Input-NAND",
     "Pins": 14,
-    "Inputs": [
-      1,2,4,5,9,10,12,13
-    ],
-    "Outputs": [
-      3, 6, 8, 11
+    "PinLabels": [
+      { "Text": "A1"  },
+      { "Text": "B1"  },
+      { "Text": "Y1"  },
+      { "Text": "A2"  },
+      { "Text": "B2"  },
+      { "Text": "Y2"  },
+      { "Text": "GND" },
+      { "Text": "Y8"  },
+      { "Text": "A3"  },
+      { "Text": "B3"  },
+      { "Text": "Y4"  },
+      { "Text": "A4"  },
+      { "Text": "B4"  },
+      { "Text": "VCC" }
     ],
     "Power": [
       7, 14
@@ -23,11 +33,21 @@
     "Name": "74LS02",
     "Function": "4x 2-Input-NOR",
     "Pins": 14,
-    "Inputs": [
-      2, 3, 5, 6, 8, 9, 11, 12
-    ],
-    "Outputs": [
-      1, 4, 10, 13
+    "PinLabels": [
+      { "Text": "Y1"  },
+      { "Text": "A1"  },
+      { "Text": "B1"  },
+      { "Text": "Y2"  },
+      { "Text": "A2"  },
+      { "Text": "B2"  },
+      { "Text": "GND" },
+      { "Text": "A8"  },
+      { "Text": "B3"  },
+      { "Text": "Y3"  },
+      { "Text": "A4"  },
+      { "Text": "B4"  },
+      { "Text": "Y4"  },
+      { "Text": "VCC" }
     ],
     "Power": [
       7, 14
@@ -42,11 +62,23 @@
     "Name": "74LS161",
     "Function": "4-Bit Counter",
     "Pins": 16,
-    "Inputs": [
-      1, 2, 3, 4, 5, 6, 7, 9, 10
-    ],
-    "Outputs": [
-      11, 12, 13, 15, 15
+    "PinLabels": [
+      { "Text": "CLR", "ActiveLow": true },
+      { "Text": "CLK" },
+      { "Text": "A"   },
+      { "Text": "B"   },
+      { "Text": "C"   },
+      { "Text": "D"   },
+      { "Text": "ENP" },
+      { "Text": "GND" },
+      { "Text": "LOAD", "ActiveLow": true },
+      { "Text": "ENT" },
+      { "Text": "QD"  },
+      { "Text": "QC"  },
+      { "Text": "QB"  },
+      { "Text": "QA"  },
+      { "Text": "RCO" },
+      { "Text": "VCC" }
     ],
     "Power": [
       8, 16

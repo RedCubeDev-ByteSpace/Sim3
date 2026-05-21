@@ -32,34 +32,52 @@ void SIMRES_init() {
         const char *name = json_object_get_string(json_object_object_get(myEntry, "Name"));
         const char *function = json_object_get_string(json_object_object_get(myEntry, "Function"));
 
+        // -------------------------------------------------------------------------------------------------------------
+        // make sure this chip is legal
+        me->numPins = json_object_get_int(json_object_object_get(myEntry, "Pins"));
+        if (me->numPins > MAX_CHIP_PINS) {
+            printf("Number of pins on chip '%s' exceeds MAX_CHIP_PINS!\n", name);
+        }
+
+        // allocate and copy the data
+        me->pinSpecs = malloc(me->numPins * sizeof(sim_pin_specification_t));
         me->id = malloc(strlen(id) + 1);
         me->name = malloc(strlen(name) + 1);
         me->function = malloc(strlen(function) + 1);
+
         strcpy(me->id, id);
         strcpy(me->name, name);
         strcpy(me->function, function);
 
         // -------------------------------------------------------------------------------------------------------------
+        // load all pin labels
+
+        // clear out all pin labels
+        me->pinLabels = malloc(me->numPins * sizeof(sim_chip_pin_label_t));
+
+        // load the pin labels
+        json_object *pinLabels = json_object_object_get(myEntry, "PinLabels");
+        int len = json_object_array_length(pinLabels);
+        for (int ii = 0; ii < len; ++ii) {
+            json_object *pinLabel = json_object_array_get_idx(pinLabels, ii);
+
+            // copy over the label, max 4 chars per label
+            snprintf(me->pinLabels[ii].label, 5, "%s", json_object_get_string(json_object_object_get(pinLabel, "Text")));
+
+            // remember is this is active high or low
+            json_object *activeLow = json_object_object_get(pinLabel, "ActiveLow");
+            if (activeLow == NULL) {
+                me->pinLabels[ii].activeLow = false;
+            } else {
+                me->pinLabels[ii].activeLow = json_object_get_boolean(activeLow);
+            }
+        }
+
+        // -------------------------------------------------------------------------------------------------------------
         // configure the pins
-        me->numPins = json_object_get_int(json_object_object_get(myEntry, "Pins"));
-        me->pinSpecs = malloc(me->numPins * sizeof(sim_pin_specification_t));
 
         int num;
         json_object *pinArray;
-
-        pinArray = json_object_object_get(myEntry, "Inputs");
-        num = json_object_array_length(pinArray);
-        for (int ii = 0; ii < num; ++ii) {
-            int index = json_object_get_int(json_object_array_get_idx(pinArray, ii));
-            me->pinSpecs[index - 1] = PIN_INPUT;
-        }
-
-        pinArray = json_object_object_get(myEntry, "Outputs");
-        num = json_object_array_length(pinArray);
-        for (int ii = 0; ii < num; ++ii) {
-            int index = json_object_get_int(json_object_array_get_idx(pinArray, ii));
-            me->pinSpecs[index - 1] = PIN_OUTPUT;
-        }
 
         pinArray = json_object_object_get(myEntry, "Power");
         num = json_object_array_length(pinArray);

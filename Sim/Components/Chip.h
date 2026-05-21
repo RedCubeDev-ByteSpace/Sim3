@@ -9,23 +9,6 @@
 #include "../SimulationSpace.h"
 #include "../../GUI/Drawables/Chip.h"
 
-typedef struct SIM_CHIP_SPECIFICATION {
-
-    char *id;
-    char *name;
-    char *function;
-
-    int numPins;
-
-    char *script;
-    bool isStateful;
-
-    int clockPin;
-
-    sim_pin_specification_t *pinSpecs;
-
-} sim_chip_specification_t;
-
 typedef struct SIM_CHIP {
 
     sim_chip_specification_t *chipSpec;
