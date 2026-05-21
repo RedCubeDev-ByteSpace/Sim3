@@ -17,7 +17,7 @@ end
 
 -- ---------------------------------------------------------------------------------------------------------------------
 num = 0
-carry = false
+rippleCarry = false
 
 function Step(pinStates)
 
@@ -25,6 +25,10 @@ function Step(pinStates)
     -- -> if low -> instantly clear the state and output
     if pinStates[1].wire == 0 then
         num = 0;
+        rippleCarry = false;
+    else
+        -- if the output is 1111 and the pin 10 (ENT) is high -> turn on ripple carry
+        rippleCarry = num == 15 and pinStates[10].wire == 1;
     end
 
     updatePins(pinStates);
@@ -35,19 +39,14 @@ end
 
 function StepRising(pinStates)
 
-    -- reset the carry flag every step
-    carry = false;
-
-    -- if 7 (ENP) and 10 (ENT) are high
-    -- -> counting is enabled, count!
-    if pinStates[7].wire == 1 and pinStates[10].wire == 1 then
-        num = num + 1;
-
-        -- have we overflowed our 4 bits?
-        if num > 15 then
-            num = 0      -- roll around
-            carry = true -- set the carry bit
-        end
+    -- Pin 1 = CLR
+    -- -> if low -> instantly clear the state and output
+    -- this has the highest priority! nothing else comes after
+    if pinStates[1].wire == 0 then
+        num = 0;
+        rippleCarry = false;
+        updatePins(pinStates);
+        return pinStates;
     end
 
     -- if 9 (LOAD) is low
@@ -56,6 +55,18 @@ function StepRising(pinStates)
         num = pinStates[3].wire + pinStates[4].wire * 2 + pinStates[5].wire * 4 + pinStates[6].wire * 8;
     end
 
+    -- if 7 (ENP) and 10 (ENT) are high
+    -- -> counting is enabled, count!
+    if pinStates[7].wire == 1 and pinStates[10].wire == 1 then
+        num = num + 1;
+
+        -- have we overflown our 4 bits?
+        if num > 15 then
+            num = 0      -- roll around
+        end
+    end
+
+    updatePins(pinStates);
     return pinStates;
 end
 
@@ -86,7 +97,7 @@ function updatePins(pinStates)
     pinStates[13].pin = state[3];
     pinStates[12].pin = state[2];
     pinStates[11].pin = state[1];
-    pinStates[15].pin = (carry and 1 or 0)
+    pinStates[15].pin = (rippleCarry and 1 or 0)
 
     return pinStates;
 end
