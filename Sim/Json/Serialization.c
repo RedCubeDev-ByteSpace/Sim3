@@ -1,6 +1,8 @@
 //
 // Created by redcube on 20/05/2026.
 //
+#include <stdio.h>
+
 #include "../SaveAndLoad.h"
 #include "../Components/Chip.h"
 
@@ -67,5 +69,32 @@ void SAVE_AND_LOAD_serializeChip(sim_chip_t *chip, json_object *json) {
 
         // this one got no state
         json_object_object_add(json, "state", json_object_new_string(""));
+        return;
     }
+
+    // load a reference to the __serialize() function
+    lua_getglobal(chip->luaState, "__serialize");
+
+    // load a reference to the SaveState() function
+    lua_getglobal(chip->luaState, "SaveState");
+
+    // call the SaveState() function
+    if (lua_pcall(chip->luaState, 0, 1, 0) != LUA_OK) {
+        printf("SIM_CHIP_step: Function SaveState() in Script '%s' effectively shit itself\n%s\n", chip->chipSpec->script, lua_tostring(chip->luaState, -1));
+        lua_close(chip->luaState);
+        chip->luaState = NULL;
+        return;
+    }
+
+    // call the __serialize() function
+    if (lua_pcall(chip->luaState, 1, 1, 0) != LUA_OK) {
+        printf("SIM_CHIP_step: Function __serialize() in Script '%s' effectively shit itself\n%s\n", chip->chipSpec->script, lua_tostring(chip->luaState, -1));
+        lua_close(chip->luaState);
+        chip->luaState = NULL;
+        return;
+    }
+
+    // store the state
+    json_object_object_add(json, "state", json_object_new_string(lua_tostring(chip->luaState, -1)));
+    lua_pop(chip->luaState, 1);
 }

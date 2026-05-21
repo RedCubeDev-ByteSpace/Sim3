@@ -3,12 +3,11 @@
 //
 
 #include "Chip.h"
+#include "Connection.h"
 #include <lualib.h>
 #include <lauxlib.h>
-
 #include <stdlib.h>
 
-#include "Connection.h"
 
 void SIM_CHIP_init(sim_chip_t *me, Vector2 position, sim_chip_specification_t *chipSpec) {
     me->chipSpec = chipSpec;
@@ -45,6 +44,19 @@ void SIM_CHIP_init(sim_chip_t *me, Vector2 position, sim_chip_specification_t *c
 
     // load all lua standard system libs
     luaL_openlibs(me->luaState);
+
+    // load the messagepack library
+    luaL_dostring(me->luaState, "package.path = package.path .. ';../Resources/Scripts/Lib/MessagePack.lua';");
+
+    // open the base script for the chips
+    char *baseScript = "../Resources/Scripts/Lib/base.lua";
+    if (luaL_dofile(me->luaState, baseScript) != LUA_OK)
+    {
+        lua_close(me->luaState);
+        me->luaState = NULL;
+        printf("SIM_CHIP_init: Couldnt load Script '%s'!! this is VERY bad\n", baseScript);
+        return;
+    }
 
     // try to open the script file, if it goes to shit -> bail
     if (luaL_dofile(me->luaState, me->chipSpec->script) != LUA_OK)

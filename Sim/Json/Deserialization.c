@@ -111,7 +111,31 @@ void SAVE_AND_LOAD_deserializeChip(json_object *json) {
 
     // if this is a stateful chip -> load its state
     if (chipSpec->isStateful) {
-        // todo
+
+        // load a reference to the LoadState() function
+        lua_getglobal(chip->luaState, "LoadState");
+
+        // load a reference to the __deserialize() function
+        lua_getglobal(chip->luaState, "__deserialize");
+
+        // load the data as an argument
+        lua_pushstring(chip->luaState, state);
+
+        // call the __deserialize() function
+        if (lua_pcall(chip->luaState, 1, 1, 0) != LUA_OK) {
+            printf("SIM_CHIP_step: Function __deserialize() in Script '%s' effectively shit itself\n%s\n", chip->chipSpec->script, lua_tostring(chip->luaState, -1));
+            lua_close(chip->luaState);
+            chip->luaState = NULL;
+            return;
+        }
+
+        // call the LoadState() function
+        if (lua_pcall(chip->luaState, 1, 0, 0) != LUA_OK) {
+            printf("SIM_CHIP_step: Function LoadState() in Script '%s' effectively shit itself\n%s\n", chip->chipSpec->script, lua_tostring(chip->luaState, -1));
+            lua_close(chip->luaState);
+            chip->luaState = NULL;
+            return;
+        }
     }
 
     // add it to the global simspace

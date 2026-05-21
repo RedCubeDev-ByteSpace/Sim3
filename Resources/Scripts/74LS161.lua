@@ -18,6 +18,7 @@ end
 -- ---------------------------------------------------------------------------------------------------------------------
 num = 0
 rippleCarry = false
+-- ---------------------------------------------------------------------------------------------------------------------
 
 function Step(pinStates)
 
@@ -73,7 +74,6 @@ end
 function StepFalling(pinStates)
 
     -- nothing to do here
-
     return pinStates;
 end
 
@@ -105,9 +105,13 @@ end
 -- ---------------------------------------------------------------------------------------------------------------------
 
 function LoadState(state)
-
+    num         = state["num"];
+    rippleCarry = state["rippleCarry"];
 end
 
 function SaveState()
-
+    return {
+        num = num,
+        rippleCarry = rippleCarry
+    };
 end
