@@ -19,7 +19,7 @@ void DRAWABLES_WIRE_BRANCHING_POINT_draw(drw_wire_branching_point_t *me) {
     Vector2 wpos = LIB_worldSpaceToScreenSpace(me->pos);
 
     if (me->error) {
-        DrawCircle((int)wpos.x, (int)wpos.y, LINE_THICKNESS * 2, COLOR_ERROR);
+        DrawCircle((int)wpos.x, (int)wpos.y, LINE_THICKNESS * GRID_zoom / 2, COLOR_ERROR);
         return;
     }
 

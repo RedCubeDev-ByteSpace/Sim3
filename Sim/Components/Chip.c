@@ -7,6 +7,7 @@
 #include <lualib.h>
 #include <lauxlib.h>
 #include <stdlib.h>
+#include <string.h>
 
 
 void SIM_CHIP_init(sim_chip_t *me, Vector2 position, sim_chip_specification_t *chipSpec) {
@@ -67,75 +68,38 @@ void SIM_CHIP_init(sim_chip_t *me, Vector2 position, sim_chip_specification_t *c
         return;
     }
 
-    // all chips require a PinSetup() function
+    // --------------------------------------------
+    // check out what functions this chip supports
+
+    // PinSetup()
     lua_getglobal(me->luaState, "PinSetup");
-    if (!lua_isfunction(me->luaState, -1)) {
-        lua_close(me->luaState);
-        me->luaState = NULL;
-        printf("SIM_CHIP_init: Script '%s' does not have a PinSetup() function! this script is unusable!\n", me->chipSpec->script);
-        return;
-    }
+    me->luaHasPinSetup = lua_isfunction(me->luaState, -1);
     lua_pop(me->luaState, 1);
 
-    // make sure all required methods exist
-
-    // for both stateful and stateless chips we require a Step() function
+    // Step()
     lua_getglobal(me->luaState, "Step");
-    if (!lua_isfunction(me->luaState, -1)) {
-        lua_close(me->luaState);
-        me->luaState = NULL;
-        printf("SIM_CHIP_init: Script '%s' does not have a Step() function! this script is unusable!\n", me->chipSpec->script);
-        return;
-    }
+    me->luaHasStep = lua_isfunction(me->luaState, -1);
     lua_pop(me->luaState, 1);
 
+    // StepRising()
+    lua_getglobal(me->luaState, "StepRising");
+    me->luaHasStepRising = lua_isfunction(me->luaState, -1);
+    lua_pop(me->luaState, 1);
 
-    if (chipSpec->isStateful) {
+    // StepFalling()
+    lua_getglobal(me->luaState, "StepFalling");
+    me->luaHasStepFalling = lua_isfunction(me->luaState, -1);
+    lua_pop(me->luaState, 1);
 
-        // for stateful chips we require a StepRising() and a StepFalling() function
+    // LoadState()
+    lua_getglobal(me->luaState, "LoadState");
+    me->luaHasLoadState = lua_isfunction(me->luaState, -1);
+    lua_pop(me->luaState, 1);
 
-        // StepRising()
-        lua_getglobal(me->luaState, "StepRising");
-        if (!lua_isfunction(me->luaState, -1)) {
-            lua_close(me->luaState);
-            me->luaState = NULL;
-            printf("SIM_CHIP_init: Script '%s' does not have a StepRising() function! this script is unusable!\n", me->chipSpec->script);
-            return;
-        }
-        lua_pop(me->luaState, 1);
-
-        // StepFalling()
-        lua_getglobal(me->luaState, "StepFalling");
-        if (!lua_isfunction(me->luaState, -1)) {
-            lua_close(me->luaState);
-            me->luaState = NULL;
-            printf("SIM_CHIP_init: Script '%s' does not have a StepFalling() function! this script is unusable!\n", me->chipSpec->script);
-            return;
-        }
-        lua_pop(me->luaState, 1);
-
-        // as well as a LoadState() and SaveState() function
-
-        // LoadState()
-        lua_getglobal(me->luaState, "LoadState");
-        if (!lua_isfunction(me->luaState, -1)) {
-            lua_close(me->luaState);
-            me->luaState = NULL;
-            printf("SIM_CHIP_init: Script '%s' does not have a LoadState() function! this script is unusable!\n", me->chipSpec->script);
-            return;
-        }
-        lua_pop(me->luaState, 1);
-
-        // SaveState()
-        lua_getglobal(me->luaState, "SaveState");
-        if (!lua_isfunction(me->luaState, -1)) {
-            lua_close(me->luaState);
-            me->luaState = NULL;
-            printf("SIM_CHIP_init: Script '%s' does not have a SaveState() function! this script is unusable!\n", me->chipSpec->script);
-            return;
-        }
-        lua_pop(me->luaState, 1);
-    }
+    // SaveState()
+    lua_getglobal(me->luaState, "SaveState");
+    me->luaHasSaveState = lua_isfunction(me->luaState, -1);
+    lua_pop(me->luaState, 1);
 
     SIM_CHIP_setup(me);
 }
@@ -170,6 +134,7 @@ void SIM_CHIP_refreshDrawable(sim_chip_t *me) {
 
 void SIM_CHIP_setup(sim_chip_t *me) {
     if (me->luaState == NULL) return; // no valid lua script for this chip
+    if (!me->luaHasPinSetup) return;
 
     // load a reference to the function
     lua_getglobal(me->luaState, "PinSetup");
@@ -178,10 +143,9 @@ void SIM_CHIP_setup(sim_chip_t *me) {
     SIM_CHIP_buildPinTable(me, false);
 
     // call the pin setup function
-    if (lua_pcall(me->luaState, 1, 1, 0) != LUA_OK) {
+    if (lua_pcall(me->luaState, 0, 0, 0) != LUA_OK) {
         printf("SIM_CHIP_setup: Function SetupPins() in Script '%s' effectively shit itself\n%s\n", me->chipSpec->script, lua_tostring(me->luaState, -1));
-        lua_close(me->luaState);
-        me->luaState = NULL;
+        lua_pop(me->luaState, 1);
         return;
     }
 
@@ -195,22 +159,25 @@ void SIM_CHIP_step(sim_chip_t *me) {
     // -----------------------------------------------------------------------------------------------------------------
     // Call the step function
 
-    // load a reference to the function
-    lua_getglobal(me->luaState, "Step");
+    if (me->luaHasStep) {
 
-    // push the state of all pins onto the stack
-    SIM_CHIP_buildPinTable(me, true);
+        // load a reference to the function
+        lua_getglobal(me->luaState, "Step");
 
-    // call the step function
-    if (lua_pcall(me->luaState, 1, 1, 0) != LUA_OK) {
-        printf("SIM_CHIP_step: Function Step() in Script '%s' effectively shit itself\n%s\n", me->chipSpec->script, lua_tostring(me->luaState, -1));
-        lua_close(me->luaState);
-        me->luaState = NULL;
-        return;
+        // push the state of all pins onto the stack
+        SIM_CHIP_buildPinTable(me, true);
+
+        // call the step function
+        if (lua_pcall(me->luaState, 0, 0, 0) != LUA_OK) {
+            printf("SIM_CHIP_step: Function Step() in Script '%s' effectively shit itself\n%s\n", me->chipSpec->script, lua_tostring(me->luaState, -1));
+            lua_pop(me->luaState, 1);
+            return;
+        }
+
+        // do something with the result
+        SIM_CHIP_readoutPinTable(me);
     }
 
-    // do something with the result
-    SIM_CHIP_readoutPinTable(me);
 
     // -----------------------------------------------------------------------------------------------------------------
     // Handle stateful chips
@@ -220,9 +187,16 @@ void SIM_CHIP_step(sim_chip_t *me) {
     sim_connection_point_t *conPoint = me->connectionPoints.buffer[me->chipSpec->clockPin];
     if (me->prevClockPinWireState == conPoint->attachedWireState) return;
 
+    // remember the current state of the clock pin
+    me->prevClockPinWireState = conPoint->attachedWireState;
+
     // there has been a change! -> is it a rising or a falling edge?
     char *functionName = "StepFalling";
     if (conPoint->attachedWireState) functionName = "StepRising";
+
+    // is there a handler for this?
+    if (conPoint->attachedWireState  && !me->luaHasStepRising ) return;
+    if (!conPoint->attachedWireState && !me->luaHasStepFalling) return;
 
     // load a reference to the function
     lua_getglobal(me->luaState, functionName);
@@ -231,18 +205,14 @@ void SIM_CHIP_step(sim_chip_t *me) {
     SIM_CHIP_buildPinTable(me, true);
 
     // call the step function
-    if (lua_pcall(me->luaState, 1, 1, 0) != LUA_OK) {
+    if (lua_pcall(me->luaState, 0, 0, 0) != LUA_OK) {
         printf("SIM_CHIP_step: Function %s() in Script '%s' effectively shit itself\n%s\n", functionName, me->chipSpec->script, lua_tostring(me->luaState, -1));
-        lua_close(me->luaState);
-        me->luaState = NULL;
+        lua_pop(me->luaState, 1);
         return;
     }
 
     // do something with the result
     SIM_CHIP_readoutPinTable(me);
-
-    // remember the current state of the clock pin
-    me->prevClockPinWireState = conPoint->attachedWireState;
 }
 
 void SIM_CHIP_buildPinTable(sim_chip_t *me, bool includeWireState) {
@@ -276,22 +246,56 @@ void SIM_CHIP_buildPinTable(sim_chip_t *me, bool includeWireState) {
             lua_setfield(me->luaState, -2, "wire");
         }
 
+        // -----------------------------------------------
         // push the record onto the pin table
-        lua_seti(me->luaState, -2, i + 1);
+
+        char *label = me->chipSpec->pinLabels[i].label;
+
+        // does this pin have a name? -> use it
+        if (strlen(label) > 0) {
+            lua_setfield(me->luaState, -2, label);
+        }
+        else {
+            lua_seti(me->luaState, -2, i + 1);
+        }
     }
+
+    // set the global "pins"
+    lua_setglobal(me->luaState, "pins");
 }
 
 void SIM_CHIP_readoutPinTable(sim_chip_t *me) {
+
+    // get the global "pins"
+    lua_getglobal(me->luaState, "pins");
 
     // apply the changes made to the pin states
     for (int i = 0; i < me->connectionPoints.length; ++i) {
 
         // get this record on the stack
-        lua_geti(me->luaState, -1, i + 1);
+        char *label = me->chipSpec->pinLabels[i].label;
+
+        // does this pin have a name? -> use it
+        if (strlen(label) > 0) {
+            lua_getfield(me->luaState, -1, label);
+        }
+        else {
+            lua_geti(me->luaState, -1, i + 1);
+        }
 
         // only take a look at the pin state
         lua_getfield(me->luaState, -1, "pin");
-        int pinState = lua_tointeger(me->luaState, -1);
+
+        // first: try to convert the value of the pin to an integer directly
+        int isInteger = false;
+        int pinState = lua_tointegerx(me->luaState, -1, &isInteger);
+
+        // if that didnt work
+        // -> convert it to a boolean and use it as 0 or 1
+        if (!isInteger) {
+            pinState = lua_toboolean(me->luaState, -1) ? 1 : 0;
+        }
+
         lua_pop(me->luaState, 2);
 
         // transfer the state

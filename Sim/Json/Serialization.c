@@ -26,6 +26,20 @@ json_object *SAVE_AND_LOAD_serializeColor(Color color) {
     return colorJson;
 }
 
+json_object *SAVE_AND_LOAD_serializeConnectionPointStates(sim_comp_list_t *conPoints) {
+    json_object *conPointsJson = json_object_new_array();
+    for (int i = 0; i < conPoints->length; ++i) {
+        sim_connection_point_t *conPoint = conPoints->buffer[i];
+
+        json_object *conPointJson = json_object_new_object();
+        json_object_object_add(conPointJson, "pin", json_object_new_int(conPoint->state));
+        json_object_object_add(conPointJson, "wire", json_object_new_boolean(conPoint->attachedWireState));
+
+        json_object_array_add(conPointsJson, conPointJson);
+    }
+    return conPointsJson;
+}
+
 void SAVE_AND_LOAD_serializeConnection(sim_connection_t *con, json_object *json) {
 
     json_object *vectorPairList = json_object_new_array();
@@ -64,8 +78,11 @@ void SAVE_AND_LOAD_serializeChip(sim_chip_t *chip, json_object *json) {
     json_object_object_add(json, "spec_id", json_object_new_string(chip->chipSpec->id));
     json_object_object_add(json, "position", SAVE_AND_LOAD_serializeVector2(chip->chip->position));
 
+    // store the state of the attached pins
+    json_object_object_add(json, "pin_states", SAVE_AND_LOAD_serializeConnectionPointStates(&chip->connectionPoints));
+
     // store the chips state if needed
-    if (!chip->chipSpec->isStateful) {
+    if (!chip->chipSpec->isStateful || !chip->luaHasSaveState || chip->luaState == NULL) {
 
         // this one got no state
         json_object_object_add(json, "state", json_object_new_string(""));

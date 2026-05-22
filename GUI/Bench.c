@@ -58,8 +58,9 @@ void BENCH_init() {
 void BENCH_process() {
     Vector2 mousePos = GetMousePosition();
     Vector2 pos = LIB_screenSpaceToWorldSpace(mousePos);
-    Vector2 wpos;
+    Vector2 wpos, hpos;
     wpos = LIB_roundificateToWholePoint(pos);
+    hpos = LIB_roundificateToHalfPoint(pos);
 
     // -----------------------------------------------------------------------------------------------------------------
     // ESC shortcut to exit out of all modes
@@ -240,13 +241,13 @@ void BENCH_process() {
                 SIM_CONNECTION_init(thisConnection);
 
                 // use it as attachment
-                attachmentVertex = wpos;
+                attachmentVertex = hpos;
                 hasAttachmentVertex = true;
 
                 // is it attached to any connection points??
                 for (int i = 0; i < SIMSPACE_lstConnectionPoints->length; ++i) {
                     sim_connection_point_t *conPoint = SIMSPACE_lstConnectionPoints->buffer[i];
-                    if (conPoint->position.x == wpos.x && conPoint->position.y == wpos.y) {
+                    if (conPoint->position.x == hpos.x && conPoint->position.y == hpos.y) {
 
                         SIM_COMP_LIST_appendConnectionPoint(&thisConnection->lstConnectedPoints, conPoint);
                         break;
@@ -260,13 +261,13 @@ void BENCH_process() {
         // if this is already part of a connection -> expand it
         if ((IsMouseButtonReleased(MOUSE_BUTTON_LEFT) || IsMouseButtonReleased(MOUSE_BUTTON_RIGHT)) && thisConnection != NULL) {
 
-            if (attachmentVertex.x == wpos.x && attachmentVertex.y == wpos.y) return; // bro this doesnt count
+            if (attachmentVertex.x == hpos.x && attachmentVertex.y == hpos.y) return; // bro this doesnt count
 
             // have we hit any connection points?
             sim_connection_point_t *conPoint = NULL;
             for (int i = 0; i < SIMSPACE_lstConnectionPoints->length; ++i) {
                 sim_connection_point_t *_conPoint = SIMSPACE_lstConnectionPoints->buffer[i];
-                if (_conPoint->position.x == wpos.x && _conPoint->position.y == wpos.y) {
+                if (_conPoint->position.x == hpos.x && _conPoint->position.y == hpos.y) {
                     conPoint = _conPoint;
                     break;
                 }
@@ -278,7 +279,7 @@ void BENCH_process() {
             }
 
             // append a new vector pair!
-            SIM_CONNECTION_VECTOR_PAIR_LIST_append(&thisConnection->lstVectorPairs, (sim_vector_pair_t){attachmentVertex, wpos, wireColors[activeColor]});
+            SIM_CONNECTION_VECTOR_PAIR_LIST_append(&thisConnection->lstVectorPairs, (sim_vector_pair_t){attachmentVertex, hpos, wireColors[activeColor]});
             if (conPoint != NULL) {
                 SIM_COMP_LIST_appendConnectionPoint(&thisConnection->lstConnectedPoints, conPoint);
             }
@@ -288,7 +289,7 @@ void BENCH_process() {
 
             // if this was a right click -> directly add this vertex as the new attachment point
             if (IsMouseButtonReleased(MOUSE_BUTTON_RIGHT)) {
-                attachmentVertex = wpos;
+                attachmentVertex = hpos;
             }
             // otherwise: just finish this wire
             else {
@@ -381,9 +382,9 @@ void BENCH_process() {
                 for (int ii = 0; ii < con->lstVectorPairs.length; ++ii) {
                     sim_vector_pair_t pair = con->lstVectorPairs.buffer[ii];
 
-                    if (pair.from.x == wpos.x && pair.from.y == wpos.y
+                    if (pair.from.x == hpos.x && pair.from.y == hpos.y
                         ||
-                        pair.to.x == wpos.x && pair.to.y == wpos.y) {
+                        pair.to.x == hpos.x && pair.to.y == hpos.y) {
 
                         SIM_COMP_LIST_appendConnection(&lst, con);
                         goto next_con;
@@ -414,7 +415,7 @@ void BENCH_process() {
             for (int i = 0; i < SIMSPACE_lstFixedContacts->length; ++i) {
                 sim_fixed_contact_t *contact = SIMSPACE_lstFixedContacts->buffer[i];
 
-                if (contact->point.position.x == wpos.x && contact->point.position.y == wpos.y) {
+                if (contact->point.position.x == hpos.x && contact->point.position.y == hpos.y) {
                     SIM_COMP_LIST_appendFixedContact(&lst, contact);
                 }
             }
@@ -435,7 +436,7 @@ void BENCH_process() {
             for (int i = 0; i < SIMSPACE_lstLEDs->length; ++i) {
                 sim_led_t *led = SIMSPACE_lstLEDs->buffer[i];
 
-                if (led->point.position.x == wpos.x && led->point.position.y == wpos.y) {
+                if (led->point.position.x == hpos.x && led->point.position.y == hpos.y) {
                     SIM_COMP_LIST_appendLED(&lst, led);
                 }
             }
@@ -459,7 +460,7 @@ void BENCH_process() {
                 for (int ii = 0; ii < chip->connectionPoints.length; ++ii) {
                     sim_connection_point_t *conPoint = chip->connectionPoints.buffer[ii];
 
-                    if (conPoint->position.x == wpos.x && conPoint->position.y == wpos.y) {
+                    if (conPoint->position.x == hpos.x && conPoint->position.y == hpos.y) {
                         SIM_COMP_LIST_appendChip(&lst, chip);
                         goto next_chip;
                     }
@@ -488,40 +489,41 @@ void BENCH_draw() {
     cursorRotation = cursorRotation > 360 ? 0 : cursorRotation;
 
     Vector2 mousePos = GetMousePosition();
-    Vector2 pos = LIB_screenSpaceToWorldSpace(mousePos);
-    pos = LIB_roundificateToWholePoint(pos);
+    Vector2 wpos = LIB_roundificateToWholePoint(LIB_screenSpaceToWorldSpace(mousePos));
+    Vector2 whpos = LIB_roundificateToHalfPoint(LIB_screenSpaceToWorldSpace(mousePos));
 
     // -----------------------------------------------------------------------------------------------------------------
     // Draw Cursors
 
-    Vector2 wpos = LIB_worldSpaceToScreenSpace(pos);
+    Vector2 pos = LIB_worldSpaceToScreenSpace(wpos);
+    Vector2 hpos = LIB_worldSpaceToScreenSpace(whpos);
     Color workingColor = wireColors[activeColor];
     switch (BENCH_benchMode) {
         case DRAWING_WIRE:
-            DrawLineEx((Vector2){wpos.x + cos(cursorRotation) * CURSOR_WIDTH, wpos.y + sin(cursorRotation) * CURSOR_WIDTH}, (Vector2){wpos.x - cos(cursorRotation) * CURSOR_WIDTH, wpos.y - sin(cursorRotation) * CURSOR_WIDTH}, CURSOR_THICKNESS, workingColor);
-            DrawLineEx((Vector2){wpos.x + cos(cursorRotation + PI/2) * CURSOR_WIDTH, wpos.y + sin(cursorRotation + PI/2) * CURSOR_WIDTH}, (Vector2){wpos.x - cos(cursorRotation + PI/2) * CURSOR_WIDTH, wpos.y - sin(cursorRotation + PI/2) * CURSOR_WIDTH}, CURSOR_THICKNESS, workingColor);
+            DrawLineEx((Vector2){hpos.x + cos(cursorRotation) * CURSOR_WIDTH, hpos.y + sin(cursorRotation) * CURSOR_WIDTH}, (Vector2){hpos.x - cos(cursorRotation) * CURSOR_WIDTH, hpos.y - sin(cursorRotation) * CURSOR_WIDTH}, CURSOR_THICKNESS, workingColor);
+            DrawLineEx((Vector2){hpos.x + cos(cursorRotation + PI/2) * CURSOR_WIDTH, hpos.y + sin(cursorRotation + PI/2) * CURSOR_WIDTH}, (Vector2){hpos.x - cos(cursorRotation + PI/2) * CURSOR_WIDTH, hpos.y - sin(cursorRotation + PI/2) * CURSOR_WIDTH}, CURSOR_THICKNESS, workingColor);
             break;
 
         case PLACE_FIXED_CONTACT:
-            newContact->position = pos;
+            newContact->position = wpos;
             newContact->rotation = pieceRotation;
             DRAWABLES_FIXED_CONTACT_draw(newContact);
             break;
 
         case PLACE_LED:
-            newLED->position = pos;
+            newLED->position = wpos;
             newLED->rotation = pieceRotation;
             DRAWABLES_LED_draw(newLED);
             break;
 
         case PLACE_CHIP:
-            newChip->position = pos;
+            newChip->position = wpos;
             DRAWABLES_CHIP_draw(newChip);
             break;
 
         case DELETION:
-            DrawLineEx((Vector2){wpos.x + cos(cursorRotation) * CURSOR_WIDTH, wpos.y + sin(cursorRotation) * CURSOR_WIDTH}, (Vector2){wpos.x - cos(cursorRotation) * CURSOR_WIDTH, wpos.y - sin(cursorRotation) * CURSOR_WIDTH}, CURSOR_THICKNESS, workingColor);
-            DrawLineEx((Vector2){wpos.x + cos(-cursorRotation - PI/2) * CURSOR_WIDTH, wpos.y + sin(-cursorRotation - PI/2) * CURSOR_WIDTH}, (Vector2){wpos.x - cos(-cursorRotation - PI/2) * CURSOR_WIDTH, wpos.y - sin(-cursorRotation - PI/2) * CURSOR_WIDTH}, CURSOR_THICKNESS, workingColor);
+            DrawLineEx((Vector2){hpos.x + cos(cursorRotation) * CURSOR_WIDTH, hpos.y + sin(cursorRotation) * CURSOR_WIDTH}, (Vector2){hpos.x - cos(cursorRotation) * CURSOR_WIDTH, hpos.y - sin(cursorRotation) * CURSOR_WIDTH}, CURSOR_THICKNESS, workingColor);
+            DrawLineEx((Vector2){hpos.x + cos(-cursorRotation - PI/2) * CURSOR_WIDTH, hpos.y + sin(-cursorRotation - PI/2) * CURSOR_WIDTH}, (Vector2){hpos.x - cos(-cursorRotation - PI/2) * CURSOR_WIDTH, hpos.y - sin(-cursorRotation - PI/2) * CURSOR_WIDTH}, CURSOR_THICKNESS, workingColor);
             break;
 
         default:
@@ -534,7 +536,7 @@ void BENCH_draw() {
     // Mode specific UI
     if (BENCH_benchMode == DRAWING_WIRE) {
         if (hasAttachmentVertex)
-            DrawLineEx(LIB_worldSpaceToScreenSpace(attachmentVertex), wpos, 0.5f, wireColors[0]);
+            DrawLineEx(LIB_worldSpaceToScreenSpace(attachmentVertex), hpos, 0.5f, wireColors[0]);
     }
 
 

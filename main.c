@@ -5,6 +5,7 @@
 #include "GUI/GUI.h"
 #include "GUI/Grid.h"
 #include "GUI/Input.h"
+#include "GUI/Menu/Menu.h"
 #include "Sim/SimulationResources.h"
 #include "Sim/SimulationSpace.h"
 #include "Sim/SaveAndLoad.h"
@@ -28,6 +29,7 @@ int main(void) {
     BENCH_init();
     SIMSPACE_init();
     SAVE_AND_LOAD_init();
+    //MENU_init();
 
     // main draw loop
     while (!WindowShouldClose()) {
@@ -37,21 +39,29 @@ int main(void) {
 
         // -------------------------------------------------------------------------------------------------------------
         // Process all events
-        INPUT_process();
-        BENCH_process();
-        SIMSPACE_process();
+        if (GUI_appState == APP_STATE_SIM) {
+            INPUT_process();
+            BENCH_process();
+            SIMSPACE_process();
+        }
 
         // -------------------------------------------------------------------------------------------------------------
         // Draw the screen
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
-        // draw the nav grid
-        GRID_draw();
+        if (GUI_appState == APP_STATE_SIM) {
 
-        // draw all components
-        DRAWABLES_drawQueue();
-        BENCH_draw();
+            // draw the nav grid
+            GRID_draw();
+
+            // draw all components
+            DRAWABLES_drawQueue();
+            BENCH_draw();
+        }
+        else {
+            MENU_draw();
+        }
 
         EndDrawing();
     }

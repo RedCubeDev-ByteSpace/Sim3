@@ -9,15 +9,21 @@
 
 #include "Grid.h"
 
+app_state_t GUI_appState;
 Font GUI_computerModern;
+Font GUI_computerModern55;
 Font GUI_computerModern20;
 Font GUI_computerModern16;
 
 void GUI_init() {
+    GUI_appState = APP_STATE_SIM;
+
     GUI_computerModern = LoadFontEx("../Resources/cmunbx.ttf", 150, NULL, 0);
+    GUI_computerModern55 = LoadFontEx("../Resources/cmunbx.ttf", 55, NULL, 0);
     GUI_computerModern20 = LoadFontEx("../Resources/cmunbx.ttf", 20, NULL, 0);
     GUI_computerModern16 = LoadFontEx("../Resources/cmunbx.ttf", 16, NULL, 0);
     SetTextureFilter(GUI_computerModern.texture, TEXTURE_FILTER_BILINEAR);
+    SetTextureFilter(GUI_computerModern55.texture, TEXTURE_FILTER_BILINEAR);
     SetTextureFilter(GUI_computerModern20.texture, TEXTURE_FILTER_BILINEAR);
     SetTextureFilter(GUI_computerModern16.texture, TEXTURE_FILTER_BILINEAR);
 }
@@ -65,6 +71,11 @@ Vector2 LIB_roundificateToWholePoint(Vector2 pos) {
     else if (pos.y < 0) pos.y = (int)(pos.y - 0.5f);
 
     return pos;
+}
+
+Vector2 LIB_roundificateToHalfPoint(Vector2 pos) {
+    Vector2 halfPos = LIB_roundificateToWholePoint((Vector2){pos.x * 2, pos.y * 2});
+    return (Vector2){ halfPos.x / 2, halfPos.y / 2 };
 }
 
 float LIB_getVectorLen(Vector2 vec) {

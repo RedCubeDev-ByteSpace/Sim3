@@ -15,6 +15,13 @@ typedef struct SIM_CHIP {
     sim_connectionpoint_list_t connectionPoints;
 
     lua_State *luaState;
+    bool luaHasPinSetup;
+    bool luaHasStep;
+    bool luaHasStepRising;
+    bool luaHasStepFalling;
+    bool luaHasLoadState;
+    bool luaHasSaveState;
+
     bool prevClockPinWireState;
 
     drw_chip_t *chip;

@@ -11,9 +11,9 @@
 // -----------------------
 // In what state can something connected to a wire be?
 typedef enum SIM_CONNECTION_POINT_STATE {
-    CONNECTION_POINT_FLOATING,
     CONNECTION_POINT_LOW,
     CONNECTION_POINT_HIGH,
+    CONNECTION_POINT_FLOATING,
 } sim_connection_point_state_t;
 
 // ---------------------------------------------------------------------------------------------------------------------

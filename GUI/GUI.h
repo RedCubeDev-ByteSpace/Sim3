@@ -16,7 +16,14 @@
 #define ZOOM_LERP_CUTOFF 0.001f
 #define ZOOM_TRAIL_CUTOFF 0.005f
 
+typedef enum APP_STATE {
+    APP_STATE_MENU, APP_STATE_SIM
+} app_state_t;
+
+extern app_state_t GUI_appState;
+
 extern Font GUI_computerModern;
+extern Font GUI_computerModern55;
 extern Font GUI_computerModern20;
 extern Font GUI_computerModern16;
 void GUI_init();
@@ -27,6 +34,7 @@ Vector2 LIB_worldSpaceToScreenSpacePrev(Vector2 worldSpace);
 Vector2 LIB_screenSpaceToWorldSpace(Vector2 screenSpace);
 bool LIB_IsVector2InRectangle(Vector2 pos, Rectangle rect);
 Vector2 LIB_roundificateToWholePoint(Vector2 pos);
+Vector2 LIB_roundificateToHalfPoint(Vector2 pos);
 float LIB_getVectorLen(Vector2 vec);
 
 #endif //SIM3_GUI_H

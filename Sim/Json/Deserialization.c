@@ -26,6 +26,23 @@ Color SAVE_AND_LOAD_deserializeColor(json_object *json) {
         json_object_get_int(json_object_array_get_idx(json, 3)) % 256,
     };
 }
+
+void SAVE_AND_LOAD_deserializeConnectionPointStates(json_object *json, sim_chip_t *chip) {
+    int len = json_object_array_length(json);
+    for (int i = 0; i < chip->chipSpec->numPins && i < len; ++i) {
+        sim_connection_point_t *conPoint = chip->connectionPoints.buffer[i];
+
+        json_object *conPointJson = json_object_array_get_idx(json, i);
+        int state = json_object_get_int(json_object_object_get(conPointJson, "pin"));
+        bool wire = json_object_get_boolean(json_object_object_get(conPointJson, "wire"));
+
+        if (state == 0) conPoint->state = CONNECTION_POINT_LOW;
+        if (state == 1) conPoint->state = CONNECTION_POINT_HIGH;
+        if (state == 2) conPoint->state = CONNECTION_POINT_FLOATING;
+        conPoint->attachedWireState = wire;
+    }
+}
+
 void SAVE_AND_LOAD_deserializeConnection(json_object *json) {
 
     sim_connection_t *connection = malloc(sizeof(sim_connection_t));
@@ -109,8 +126,18 @@ void SAVE_AND_LOAD_deserializeChip(json_object *json) {
     sim_chip_t *chip = malloc(sizeof(sim_chip_t));
     SIM_CHIP_init(chip, position, chipSpec);
 
+    // load the state of the pins
+    json_object *pinStatesJson = json_object_object_get(json, "pin_states");
+    if (pinStatesJson != NULL) {
+        SAVE_AND_LOAD_deserializeConnectionPointStates(pinStatesJson, chip);
+    }
+
     // if this is a stateful chip -> load its state
-    if (chipSpec->isStateful) {
+    if (chip->luaState != NULL && chipSpec->isStateful && chip->luaHasLoadState) {
+
+        // make sure the clock pin state is set correctly
+        sim_connection_point_t *conPoint = chip->connectionPoints.buffer[chip->chipSpec->clockPin];
+        chip->prevClockPinWireState = conPoint->attachedWireState;
 
         // load a reference to the LoadState() function
         lua_getglobal(chip->luaState, "LoadState");

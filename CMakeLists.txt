@@ -51,4 +51,6 @@ add_executable(sim3 main.c
         Sim/SaveAndLoad.h
         Sim/Json/Serialization.c
         Sim/Json/Deserialization.c
-        Sim/Components/ChipSpec.h)
+        Sim/Components/ChipSpec.h
+        GUI/Menu/Menu.c
+        GUI/Menu/Menu.h)

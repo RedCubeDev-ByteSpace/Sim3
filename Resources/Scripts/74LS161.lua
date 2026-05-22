@@ -2,17 +2,30 @@
 -- Logic Implementation for the 74LS161, 4-Bit Binary Counter
 -- /red - 2026-05-21
 -- ---------------------------------------------------------------------------------------------------------------------
-function PinSetup(pinStates)
+function PinSetup()
 
-    for i = 1, 10 do
-        pinStates[i].pin = 2; -- all of these are inputs (floating)
-    end
+    -- power pins are just gonna be inputs
+    pins.VCC.pin = PIN_INPUT;
+    pins.GND.pin = PIN_INPUT;
 
-    for i = 11, 15 do
-        pinStates[i].pin = 0; -- all of these are outputs (low)
-    end
+    -- all them inputs
+    pins.CLR .pin = PIN_INPUT;
+    pins.CLK .pin = PIN_INPUT;
+    pins.A   .pin = PIN_INPUT;
+    pins.B   .pin = PIN_INPUT;
+    pins.C   .pin = PIN_INPUT;
+    pins.D   .pin = PIN_INPUT;
+    pins.ENP .pin = PIN_INPUT;
+    pins.LOAD.pin = PIN_INPUT;
+    pins.ENT .pin = PIN_INPUT;
 
-    return pinStates;
+    -- all them outputs
+    pins.QA  .pin = PIN_OUTPUT;
+    pins.QB  .pin = PIN_OUTPUT;
+    pins.QC  .pin = PIN_OUTPUT;
+    pins.QD  .pin = PIN_OUTPUT;
+    pins.RCO .pin = PIN_OUTPUT;
+
 end
 
 -- ---------------------------------------------------------------------------------------------------------------------
@@ -20,86 +33,74 @@ num = 0
 rippleCarry = false
 -- ---------------------------------------------------------------------------------------------------------------------
 
-function Step(pinStates)
+function Step()
 
-    -- Pin 1 = CLR
-    -- -> if low -> instantly clear the state and output
-    if pinStates[1].wire == 0 then
+    -- if CLR low -> instantly clear the state and output
+    if pins.CLR.wire == PIN_LOW then
         num = 0;
         rippleCarry = false;
     else
-        -- if the output is 1111 and the pin 10 (ENT) is high -> turn on ripple carry
-        rippleCarry = num == 15 and pinStates[10].wire == 1;
+        -- if the output is 1111 and the pin ENT is high -> turn on ripple carry
+        rippleCarry = num == 15 and pins.ENT.wire == 1;
     end
 
-    updatePins(pinStates);
-    return pinStates;
+    updatePins();
 end
 
 -- ---------------------------------------------------------------------------------------------------------------------
 
-function StepRising(pinStates)
+function StepRising()
 
-    -- Pin 1 = CLR
-    -- -> if low -> instantly clear the state and output
+    -- if CLR low -> instantly clear the state and output
     -- this has the highest priority! nothing else comes after
-    if pinStates[1].wire == 0 then
+    if pins.CLR.wire == PIN_LOW then
+
+        -- just clear the state, then end this step
         num = 0;
         rippleCarry = false;
-        updatePins(pinStates);
-        return pinStates;
+        updatePins();
+
+        return;
     end
 
-    -- if 9 (LOAD) is low
+    -- if LOAD is low
     -- -> load the value from the inputs
-    if pinStates[9].wire == 0 then
-        num = pinStates[3].wire + pinStates[4].wire * 2 + pinStates[5].wire * 4 + pinStates[6].wire * 8;
+    if pins.LOAD.wire == PIN_LOW then
+        num = BinToNum({
+            pins.D.wire,
+            pins.C.wire,
+            pins.B.wire,
+            pins.A.wire,
+        });
+
+        updatePins();
+        return;
     end
 
-    -- if 7 (ENP) and 10 (ENT) are high
+    -- if ENP and ENT are high
     -- -> counting is enabled, count!
-    if pinStates[7].wire == 1 and pinStates[10].wire == 1 then
+    if pins.ENP.wire == PIN_HIGH and pins.ENT.wire == PIN_HIGH then
         num = num + 1;
 
         -- have we overflown our 4 bits?
         if num > 15 then
-            num = 0      -- roll around
+            num = 0      -- roll over
         end
     end
 
-    updatePins(pinStates);
-    return pinStates;
-end
-
-function StepFalling(pinStates)
-
-    -- nothing to do here
-    return pinStates;
+    updatePins();
 end
 
 -- ---------------------------------------------------------------------------------------------------------------------
 
-function toBits(num,bits)
-    -- returns a table of bits, most significant first.
-    bits = bits or math.max(1, select(2, math.frexp(num)))
-    local t = {} -- will contain the bits
-    for b = bits, 1, -1 do
-        t[b] = math.fmod(num, 2)
-        num = math.floor((num - t[b]) / 2)
-    end
-    return t
-end
+function updatePins()
 
-function updatePins(pinStates)
-
-    state = toBits(num, 4);
-    pinStates[14].pin = state[4];
-    pinStates[13].pin = state[3];
-    pinStates[12].pin = state[2];
-    pinStates[11].pin = state[1];
-    pinStates[15].pin = (rippleCarry and 1 or 0)
-
-    return pinStates;
+    state = NumToBin(num, 4);
+    pins.QA .pin = state[4];
+    pins.QB .pin = state[3];
+    pins.QC .pin = state[2];
+    pins.QD .pin = state[1];
+    pins.RCO.pin = rippleCarry;
 end
 
 -- ---------------------------------------------------------------------------------------------------------------------

@@ -1,4 +1,6 @@
 -- ---------------------------------------------------------------------------------------------------------------------
+-- Base64 enconding and decoding
+-- ---------------------------------------------------------------------------------------------------------------------
 -- Source - https://stackoverflow.com/a/35303321
 -- Posted by TheCrimulo
 -- Retrieved 2026-05-21, License - CC BY-SA 3.0
@@ -35,7 +37,8 @@ function __b64_dec(data)
 end
 
 -- ---------------------------------------------------------------------------------------------------------------------
-
+-- Serialize and Deserialize MessagePack for chip state storage
+-- ---------------------------------------------------------------------------------------------------------------------
 function __serialize(data)
     local mp = require("MessagePack");
     return __b64_enc(mp.pack(data));
@@ -45,3 +48,40 @@ function __deserialize(binary)
     local mp = require("MessagePack");
     return mp.unpack(__b64_dec(binary));
 end
+
+-- ---------------------------------------------------------------------------------------------------------------------
+-- Helpers
+-- ---------------------------------------------------------------------------------------------------------------------
+function NumToBin(num, bits)
+    bits = bits or math.max(1, select(2, math.frexp(num)))
+    local t = {} -- will contain the bits
+    for b = bits, 1, -1 do
+        t[b] = math.fmod(num, 2)
+        num = math.floor((num - t[b]) / 2)
+    end
+    return t
+end
+
+function BinToNum(data)
+    len = #data;
+    num = 0;
+
+    for i = 1, len do
+        if data[i] ~= 0 then
+            data[i] = 1;
+        end
+
+        num = num + data[i] * 2 ^ (len - i);
+    end
+
+    return num
+end
+
+-- ---------------------------------------------------------------------------------------------------------------------
+-- Some values
+-- ---------------------------------------------------------------------------------------------------------------------
+PIN_LOW = 0
+PIN_HIGH = 1
+PIN_FLOATING = 2
+PIN_INPUT = PIN_FLOATING
+PIN_OUTPUT = PIN_LOW

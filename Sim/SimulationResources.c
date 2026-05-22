@@ -58,7 +58,7 @@ void SIMRES_init() {
         // load the pin labels
         json_object *pinLabels = json_object_object_get(myEntry, "PinLabels");
         int len = json_object_array_length(pinLabels);
-        for (int ii = 0; ii < len; ++ii) {
+        for (int ii = 0; ii < len && ii < me->numPins; ++ii) {
             json_object *pinLabel = json_object_array_get_idx(pinLabels, ii);
 
             // copy over the label, max 4 chars per label
