@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "../SimulationSpace.h"
 #include "../../GUI/Drawables/WireBranchingPoint.h"
 
 void SIM_CONNECTION_init(sim_connection_t *me) {
@@ -135,6 +136,13 @@ void SIM_CONNECTION_refreshDrawablesStructure(sim_connection_t *me) {
         SIM_CONNECTION_DRAWABLE_LIST_add(&me->lstDrawables, (drawable_t*)branchingPoint);
     }
 
+    // for (int i = 0; i < me->lstConnectableVectors.length; ++i) {
+    //     drw_wire_branching_point_t *branchingPoint = malloc(sizeof(drw_wire_branching_point_t));
+    //     DRAWABLES_WIRE_BRANCHING_POINT_init(branchingPoint, me->lstConnectableVectors.buffer[i].position, RED);
+    //     DRAWABLES_enqueue((drawable_t*)branchingPoint);
+    //     SIM_CONNECTION_DRAWABLE_LIST_add(&me->lstDrawables, (drawable_t*)branchingPoint);
+    // }
+
     // were so done with this
     free(records);
 
@@ -148,12 +156,12 @@ void SIM_CONNECTION_calculateConnectableVectors(sim_connection_t *me, Vector2 po
     if (pointA.x == pointB.x && pointA.y == pointB.y) return;
 
     // calculate the horizontal distance between the points
-    int deltaX = pointA.x - pointB.x;
+    float deltaX = pointA.x - pointB.x;
     if (deltaX < 0) deltaX = -deltaX;
 
     // if this is a vertical line -> special case
     if (deltaX == 0) {
-        int fromY, toY;
+        float fromY, toY;
         if (pointA.y > pointB.y) {
             fromY = pointB.y;
             toY = pointA.y;
@@ -163,7 +171,7 @@ void SIM_CONNECTION_calculateConnectableVectors(sim_connection_t *me, Vector2 po
             toY = pointB.y;
         }
 
-        for (int y = fromY + 1; y < toY; ++y) {
+        for (float y = fromY + 0.5f; y < toY; y += 0.5f) {
 
             // add all points on the way as connectable points
             SIM_CONNECTION_CONNECTABLE_VECTOR_LIST_append(&me->lstConnectableVectors, (Vector2){ pointA.x, y }, index);
@@ -184,21 +192,158 @@ void SIM_CONNECTION_calculateConnectableVectors(sim_connection_t *me, Vector2 po
         to = pointA;
     }
 
-    int deltaY = to.y - from.y;
-    float slope = (float)deltaY / (float)deltaX;
+    float deltaY = to.y - from.y;
+    float slope = deltaY / deltaX;
 
-    for (int x = 1; x < deltaX; ++x) {
+    for (float x = 0.5f; x < deltaX; x += 0.5f) {
 
         float y = x * slope;
 
         // if this is a whole number point
-        if (y == roundf(y)) {
+        if (y * 2 == roundf(y * 2)) {
 
             // add it to the connectables
             SIM_CONNECTION_CONNECTABLE_VECTOR_LIST_append(&me->lstConnectableVectors, (Vector2){ from.x + x, from.y + y }, index);
         }
 
     }
+}
+
+void SIM_CONNECTION_rebuildAndSplitConnection(sim_connection_t *me) {
+    if (me->lstVectorPairs.length == 0) return;
+
+    sim_connection_t *newConnection = NULL;
+
+    // create a new dynamic vector pair list as a queue of vectors to check
+    sim_connection_vector_pair_list_t vectorPairsToCheck;
+    SIM_CONNECTION_VECTOR_PAIR_LIST_init(&vectorPairsToCheck);
+
+    // create a new dynamic vector pair list for any matches we found
+    sim_connection_vector_pair_list_t vectorPairsThatConnect;
+    SIM_CONNECTION_VECTOR_PAIR_LIST_init(&vectorPairsThatConnect);
+
+    // create a new connection point list for connection points to move over to the new con
+    sim_comp_list_t connectionPointsThatConnect;
+    SIM_COMP_LIST_init(&connectionPointsThatConnect);
+
+    // as long as there are vector pairs in the connection left
+    while (me->lstVectorPairs.length > 0) {
+
+        // if there is no vector pair to check in the queue yet but there are still some left in the connection
+        // -> take the first one out of the connection and add it to the checking queue
+        if (vectorPairsToCheck.length == 0) {
+
+            // if there already was a connection we were building
+            // ->finalize it
+            if (newConnection != NULL) {
+                SIM_COMP_LIST_appendConnection(SIMSPACE_lstConnections, newConnection);
+                SIM_CONNECTION_refreshDrawablesStructure(newConnection);
+            }
+
+            // start a new connection object
+            newConnection = malloc(sizeof(sim_connection_t));
+            SIM_CONNECTION_init(newConnection);
+
+            sim_vector_pair_t firstVecPair = me->lstVectorPairs.buffer[0];
+            SIM_CONNECTION_VECTOR_PAIR_LIST_removeAt(&me->lstVectorPairs, 0);
+            SIM_CONNECTION_VECTOR_PAIR_LIST_append(&vectorPairsToCheck, firstVecPair);
+        }
+
+        // travel through all connected vectors as long as we have any left
+        while (vectorPairsToCheck.length > 0) {
+
+            // dequeue the vector pair at the front
+            sim_vector_pair_t thisPair = vectorPairsToCheck.buffer[0];
+            SIM_CONNECTION_VECTOR_PAIR_LIST_removeAt(&vectorPairsToCheck, 0);
+
+            // add it to the new connection
+            SIM_CONNECTION_VECTOR_PAIR_LIST_append(&newConnection->lstVectorPairs, thisPair);
+
+            // find all connection points attached to this pair
+            for (int i = 0; i < me->lstConnectedPoints.length; ++i) {
+                sim_connection_point_t *thisPoint = me->lstConnectedPoints.buffer[i];
+
+                if (
+                    thisPair.from.x == thisPoint->position.x && thisPair.from.y == thisPoint->position.y
+                    ||
+                    thisPair.to.x == thisPoint->position.x && thisPair.to.y == thisPoint->position.y
+                ) {
+                    SIM_COMP_LIST_appendConnectionPoint(&connectionPointsThatConnect, thisPoint);
+                }
+            }
+
+            // shovel them over!!
+            for (int i = 0; i < connectionPointsThatConnect.length; ++i) {
+                sim_connection_point_t *thisPoint = connectionPointsThatConnect.buffer[i];
+
+                // remove from the old
+                SIM_COMP_LIST_removeConnectionPointRef(&me->lstConnectedPoints, thisPoint);
+
+                // add to the new
+                SIM_COMP_LIST_appendConnectionPoint(&newConnection->lstConnectedPoints, thisPoint);
+            }
+
+            SIM_COMP_LIST_clear(&connectionPointsThatConnect);
+
+            // go through all remaining vectors of this connection and look for any vector pairs
+            // that are connected to this one
+            // basically, we're walking a tree, idk how to describe this idk man you know how trees work
+            for (int i = 0; i < me->lstVectorPairs.length; ++i) {
+                sim_vector_pair_t otherPair = me->lstVectorPairs.buffer[i];
+
+                if (
+                    // this FROM = other FROM
+                    (thisPair.from.x == otherPair.from.x && thisPair.from.y == otherPair.from.y)
+                    ||
+                    // this FROM = other TO
+                    (thisPair.from.x == otherPair.to.x && thisPair.from.y == otherPair.to.y)
+                    ||
+                    // this TO = other FROM
+                    (thisPair.to.x == otherPair.from.x && thisPair.to.y == otherPair.from.y)
+                    ||
+                    // this TO = other TO
+                    (thisPair.to.x == otherPair.to.x && thisPair.to.y == otherPair.to.y)
+                ) {
+                    // this one is connected to the last one!!!
+                    // remember it so we can delete it properly and add it to the queue
+                    SIM_CONNECTION_VECTOR_PAIR_LIST_append(&vectorPairsThatConnect, otherPair);
+                }
+            }
+
+            // go through all the vector pairs that connect to this one
+            for (int i = 0; i < vectorPairsThatConnect.length; ++i) {
+                sim_vector_pair_t otherPair = vectorPairsThatConnect.buffer[i];
+
+                // remove this vector pair from the connection
+                SIM_CONNECTION_VECTOR_PAIR_LIST_remove(&me->lstVectorPairs, otherPair);
+
+                // add this vector pair to the queue to check further
+                SIM_CONNECTION_VECTOR_PAIR_LIST_append(&vectorPairsToCheck, otherPair);
+            }
+
+            // free the temp lists buffer
+            SIM_CONNECTION_VECTOR_PAIR_LIST_clear(&vectorPairsThatConnect);
+        }
+    }
+
+    SIM_CONNECTION_VECTOR_PAIR_LIST_clear(&vectorPairsToCheck);
+
+    if (newConnection != NULL) {
+        SIM_COMP_LIST_appendConnection(SIMSPACE_lstConnections, newConnection);
+        SIM_CONNECTION_refreshDrawablesStructure(newConnection);
+    }
+
+    // ----------------------------------
+    // clean this old empty connection up
+
+    // reset all connected connection points
+    for (int ii = 0; ii < me->lstConnectedPoints.length; ++ii) {
+        ((sim_connection_point_t*)(me->lstConnectedPoints.buffer[ii]))->attachedWireState = false;
+    }
+
+    SIM_CONNECTION_unload(me);
+    SIM_COMP_LIST_removeConnectionRef(SIMSPACE_lstConnections, me);
+    free(me);
 }
 
 void SIM_VECTOR_RECORD_registerVector(sim_vector_record_t *records, Vector2 vec, Color color, int maxNum) {

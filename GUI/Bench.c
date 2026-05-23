@@ -379,33 +379,60 @@ void BENCH_process() {
             for (int i = 0; i < SIMSPACE_lstConnections->length; ++i) {
                 sim_connection_t *con = SIMSPACE_lstConnections->buffer[i];
 
+                sim_connection_vector_pair_list_t lstPairsToDelete;;
+                SIM_CONNECTION_VECTOR_PAIR_LIST_init(&lstPairsToDelete);
+
                 for (int ii = 0; ii < con->lstVectorPairs.length; ++ii) {
                     sim_vector_pair_t pair = con->lstVectorPairs.buffer[ii];
 
+                    // have we hit a vector anchor point?
                     if (pair.from.x == hpos.x && pair.from.y == hpos.y
                         ||
                         pair.to.x == hpos.x && pair.to.y == hpos.y) {
 
-                        SIM_COMP_LIST_appendConnection(&lst, con);
-                        goto next_con;
+                        // append this vector pair to be deleted
+                        SIM_CONNECTION_VECTOR_PAIR_LIST_append(&lstPairsToDelete, pair);
                     }
                 }
 
-                next_con:
+                // go through all vectors that another connection can connect to
+                for (int ii = 0; ii < con->lstConnectableVectors.length; ++ii) {
+                    sim_connectable_vector_t vec = con->lstConnectableVectors.buffer[ii];
+
+                    if (vec.position.x == hpos.x && vec.position.y == hpos.y) {
+
+                        // append this vector pair to be deleted
+                        SIM_CONNECTION_VECTOR_PAIR_LIST_append(&lstPairsToDelete, con->lstVectorPairs.buffer[vec.vectorPairIndex]);
+                    }
+                }
+
+                // remove all pairs we hit
+                for (int ii = 0; ii < lstPairsToDelete.length; ++ii) {
+                    sim_vector_pair_t pair = lstPairsToDelete.buffer[ii];
+                    SIM_CONNECTION_VECTOR_PAIR_LIST_remove(&con->lstVectorPairs, pair);
+                }
+
+                if (lstPairsToDelete.length > 0) {
+
+                    // append the connection to recombobulate
+                    SIM_COMP_LIST_appendConnection(&lst, con);
+                }
+
+                SIM_CONNECTION_VECTOR_PAIR_LIST_clear(&lstPairsToDelete);
             }
 
-            // death
+            // recombobulation
             for (int i = 0; i < lst.length; ++i) {
                 sim_connection_t *con = lst.buffer[i];
 
-                // reset all connected connection points
-                for (int ii = 0; ii < con->lstConnectedPoints.length; ++ii) {
-                    ((sim_connection_point_t*)(con->lstConnectedPoints.buffer[ii]))->attachedWireState = false;
+                if (con->lstVectorPairs.length == 0) {
+                    SIM_CONNECTION_unload(con);
+                    SIM_COMP_LIST_removeConnectionRef(SIMSPACE_lstConnections, con);
+                    free(con);
                 }
-
-                SIM_CONNECTION_unload(con);
-                SIM_COMP_LIST_removeConnectionRef(SIMSPACE_lstConnections, con);
-                free(con);
+                else {
+                    SIM_CONNECTION_rebuildAndSplitConnection(con);
+                }
             }
 
             SIM_COMP_LIST_clear(&lst);

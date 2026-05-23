@@ -96,6 +96,7 @@ void SIM_CONNECTION_refreshState(sim_connection_t *me);
 void SIM_CONNECTION_refreshDrawablesState(sim_connection_t *me);
 void SIM_CONNECTION_refreshDrawablesStructure(sim_connection_t *me);
 void SIM_CONNECTION_calculateConnectableVectors(sim_connection_t *me, Vector2 pointA, Vector2 pointB, int index);
+void SIM_CONNECTION_rebuildAndSplitConnection(sim_connection_t *me);
 void SIM_CONNECTION_clearDrawables(sim_connection_t *me);
 
 #endif //SIM3_CONNECTION_H
