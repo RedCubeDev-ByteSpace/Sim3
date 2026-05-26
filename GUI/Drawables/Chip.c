@@ -22,7 +22,6 @@ void DRAWABLES_CHIP_init(drw_chip_t *me, Vector2 pos, sim_chip_specification_t *
 }
 
 void DRAWABLES_CHIP_draw(drw_chip_t *me) {
-
     float zoomedSpacing = GRID_SPACING * GRID_zoom;
     Vector2 wpos = LIB_worldSpaceToScreenSpace(me->position);
     for (int i = 0; i < me->numConnectorsPerRow; i++) {
@@ -48,8 +47,19 @@ void DRAWABLES_CHIP_draw(drw_chip_t *me) {
         4 * GRID_zoom,
         -90, 90, 10, BLACK);
 
-    Vector2 size = MeasureTextEx(GUI_fonts[COMPUTER_MODERN_150], me->chipSpec->name, zoomedSpacing, 1);
-    DrawTextEx(GUI_fonts[COMPUTER_MODERN_150], me->chipSpec->name,
+    Font font = GUI_fonts[COMPUTER_MODERN_150];
+    if (zoomedSpacing <= 11) {
+        font = GUI_fonts[COMPUTER_MODERN_11];
+    } else if (zoomedSpacing <= 16) {
+        font = GUI_fonts[COMPUTER_MODERN_16];
+    } else if (zoomedSpacing <= 20) {
+        font = GUI_fonts[COMPUTER_MODERN_20];
+    } else if (zoomedSpacing <= 55) {
+        font = GUI_fonts[COMPUTER_MODERN_55];
+    }
+
+    Vector2 size = MeasureTextEx(font, me->chipSpec->name, zoomedSpacing, 1);
+    DrawTextEx(font, me->chipSpec->name,
         (Vector2) {
             wpos.x - zoomedSpacing / 2 + (me->numConnectorsPerRow * zoomedSpacing) / 2 - size.x / 2,
             wpos.y + zoomedSpacing + zoomedSpacing - size.y / 2 + zoomedSpacing * 0.05f
