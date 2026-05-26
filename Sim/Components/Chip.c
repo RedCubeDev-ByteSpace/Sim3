@@ -324,4 +324,8 @@ void SIM_CHIP_unload(sim_chip_t *me) {
         SIM_COMP_LIST_removeConnectionPointRef(SIMSPACE_lstConnectionPoints, conPoint);
         free(conPoint);
     }
+
+    if (me->luaState != NULL) {
+        lua_close(me->luaState);
+    }
 }

@@ -6,9 +6,13 @@
 #define SIM3_GUI_H
 #include "raylib.h"
 
+#define RAYLIB_COLOR_TO_CLAY_COLOR(color) (Clay_Color) { .r = color.r, .g = color.g, .b = color.b, .a = color.a }
+
+
 #define INITIAL_WINDOW_WIDTH 800
 #define INITIAL_WINDOW_HEIGHT 600
 
+#define VERSION "v1.00"
 #define TARGET_FPS 100
 
 #define MAX_ZOOM 25
@@ -20,13 +24,18 @@ typedef enum APP_STATE {
     APP_STATE_MENU, APP_STATE_SIM
 } app_state_t;
 
+#define NUM_FONTS 5
+typedef enum FONT {
+    COMPUTER_MODERN_11,
+    COMPUTER_MODERN_16,
+    COMPUTER_MODERN_20,
+    COMPUTER_MODERN_55,
+    COMPUTER_MODERN_150,
+} font_t;
+
 extern app_state_t GUI_appState;
 
-extern Font GUI_computerModern;
-extern Font GUI_computerModern55;
-extern Font GUI_computerModern20;
-extern Font GUI_computerModern16;
-extern Font GUI_computerModern11;
+extern Font GUI_fonts[5];
 void GUI_init();
 
 float LIB_lerp(float a, float b, float f);

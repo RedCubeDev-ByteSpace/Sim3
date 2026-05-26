@@ -3,8 +3,8 @@ project(sim3 C)
 
 set(CMAKE_C_STANDARD 11)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -fno-omit-frame-pointer -g")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -fno-omit-frame-pointer -g")
+#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
 
 link_libraries(raylib m json-c lua)
 add_executable(sim3 main.c
@@ -56,4 +56,9 @@ add_executable(sim3 main.c
         GUI/Menu/Menu.h
         GUI/Statusbar.c
         GUI/Statusbar.h
-        GUI/Lib/tinyfiledialogs.c)
+        GUI/Lib/tinyfiledialogs.c
+        GUI/Lib/clay.c
+        GUI/Lib/clay.h
+        Sim/Json/AppData.c
+        Sim/Json/AppData.h
+        Sim/Json/AppDataRecentRecord.c)

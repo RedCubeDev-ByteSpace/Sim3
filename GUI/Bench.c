@@ -695,10 +695,10 @@ void BENCH_draw() {
             GUI_WindowSize.x - width - 5, anchorY + 5, width, 30
         }, 0.1f, 3, 1, BLACK);
 
-        Vector2 size = MeasureTextEx(GUI_computerModern16, SIMRES_chipSpecifications[i].name, 16, 1);
-        DrawTextEx(GUI_computerModern16, SIMRES_chipSpecifications[i].name, (Vector2){ GUI_WindowSize.x - width - 5 + width / 2 - size.x / 2, anchorY + 6 }, 16, 1, !selected ? BLACK : WHITE);
-        size = MeasureTextEx(GUI_computerModern20, SIMRES_chipSpecifications[i].function, 16, 1);
-        DrawTextEx(GUI_computerModern20, SIMRES_chipSpecifications[i].function, (Vector2){ GUI_WindowSize.x - width - 5 + width / 2 - size.x / 2, anchorY + 18 }, 16, 1, !selected ? BLACK : WHITE);
+        Vector2 size = MeasureTextEx(GUI_fonts[COMPUTER_MODERN_16], SIMRES_chipSpecifications[i].name, 16, 1);
+        DrawTextEx(GUI_fonts[COMPUTER_MODERN_16], SIMRES_chipSpecifications[i].name, (Vector2){ GUI_WindowSize.x - width - 5 + width / 2 - size.x / 2, anchorY + 6 }, 16, 1, !selected ? BLACK : WHITE);
+        size = MeasureTextEx(GUI_fonts[COMPUTER_MODERN_20], SIMRES_chipSpecifications[i].function, 16, 1);
+        DrawTextEx(GUI_fonts[COMPUTER_MODERN_20], SIMRES_chipSpecifications[i].function, (Vector2){ GUI_WindowSize.x - width - 5 + width / 2 - size.x / 2, anchorY + 18 }, 16, 1, !selected ? BLACK : WHITE);
 
         anchorY += 35;
     }
@@ -721,4 +721,8 @@ void BENCH_draw() {
             }, 0.1f, 3, 1, BLACK);
         }
     }
+}
+
+void BENCH_layout() {
+
 }

@@ -37,5 +37,6 @@ extern bench_working_mode_t BENCH_benchMode;
 void BENCH_init();
 void BENCH_process();
 void BENCH_draw();
+void BENCH_layout();
 
 #endif //SIM3_BENCH_H

@@ -10,5 +10,6 @@
 
 void MENU_init();
 void MENU_draw();
+void MENU_layout();
 
 #endif //SIM3_MENU_H

@@ -10,25 +10,20 @@
 #include "Grid.h"
 
 app_state_t GUI_appState;
-Font GUI_computerModern;
-Font GUI_computerModern55;
-Font GUI_computerModern20;
-Font GUI_computerModern16;
-Font GUI_computerModern11;
+Font GUI_fonts[5];
 
 void GUI_init() {
-    GUI_appState = APP_STATE_SIM;
+    GUI_appState = APP_STATE_MENU;
 
-    GUI_computerModern = LoadFontEx("../Resources/cmunbx.ttf", 150, NULL, 0);
-    GUI_computerModern55 = LoadFontEx("../Resources/cmunbx.ttf", 55, NULL, 0);
-    GUI_computerModern20 = LoadFontEx("../Resources/cmunbx.ttf", 20, NULL, 0);
-    GUI_computerModern16 = LoadFontEx("../Resources/cmunbx.ttf", 16, NULL, 0);
-    GUI_computerModern11 = LoadFontEx("../Resources/cmunbx.ttf", 11, NULL, 0);
-    SetTextureFilter(GUI_computerModern.texture, TEXTURE_FILTER_BILINEAR);
-    SetTextureFilter(GUI_computerModern55.texture, TEXTURE_FILTER_BILINEAR);
-    SetTextureFilter(GUI_computerModern20.texture, TEXTURE_FILTER_BILINEAR);
-    SetTextureFilter(GUI_computerModern16.texture, TEXTURE_FILTER_BILINEAR);
-    SetTextureFilter(GUI_computerModern11.texture, TEXTURE_FILTER_BILINEAR);
+    GUI_fonts[COMPUTER_MODERN_150] = LoadFontEx("../Resources/cmunbx.ttf", 150, NULL, 0);
+    GUI_fonts[COMPUTER_MODERN_55 ] = LoadFontEx("../Resources/cmunbx.ttf", 55, NULL, 0);
+    GUI_fonts[COMPUTER_MODERN_20 ] = LoadFontEx("../Resources/cmunbx.ttf", 20, NULL, 0);
+    GUI_fonts[COMPUTER_MODERN_16 ] = LoadFontEx("../Resources/cmunbx.ttf", 16, NULL, 0);
+    GUI_fonts[COMPUTER_MODERN_11 ] = LoadFontEx("../Resources/cmunbx.ttf", 11, NULL, 0);
+
+    for (int i = 2; i < NUM_FONTS; ++i) {
+        SetTextureFilter(GUI_fonts[i].texture, TEXTURE_FILTER_BILINEAR);
+    }
 }
 
 float LIB_lerp(float a, float b, float f)

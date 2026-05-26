@@ -12,11 +12,48 @@
 
 #include "SimulationSpace.h"
 #include "../GUI/Lib/tinyfiledialogs.h"
+#include "Components/Chip.h"
+#include "Json/AppData.h"
 
 char *SAVE_AND_LOAD_currentProject;
 
 void SAVE_AND_LOAD_init() {
     SAVE_AND_LOAD_currentProject = NULL;
+}
+
+void SAVE_AND_LOAD_close() {
+
+    // -------------------------------------------------------------------------
+    // unload all simulation resources
+
+    for (int i = 0; i < SIMSPACE_lstConnections->length; ++i) {
+        SIM_CONNECTION_unload(SIMSPACE_lstConnections->buffer[i]);
+    }
+    SIM_COMP_LIST_clear(SIMSPACE_lstConnections);
+
+    for (int i = 0; i < SIMSPACE_lstFixedContacts->length; ++i) {
+        SIM_FIXED_CONTACT_unload(SIMSPACE_lstFixedContacts->buffer[i]);
+    }
+    SIM_COMP_LIST_clear(SIMSPACE_lstFixedContacts);
+
+    for (int i = 0; i < SIMSPACE_lstChips->length; ++i) {
+        SIM_CHIP_unload(SIMSPACE_lstChips->buffer[i]);
+    }
+    SIM_COMP_LIST_clear(SIMSPACE_lstChips);
+
+    for (int i = 0; i < SIMSPACE_lstLEDs->length; ++i) {
+        SIM_LED_unload(SIMSPACE_lstLEDs->buffer[i]);
+    }
+    SIM_COMP_LIST_clear(SIMSPACE_lstLEDs);
+    SIM_COMP_LIST_clear(SIMSPACE_lstConnectionPoints);
+
+    // -------------------------------------------------------------------------
+    // unload the project name
+
+    if (SAVE_AND_LOAD_currentProject != NULL) {
+        free(SAVE_AND_LOAD_currentProject);
+        SAVE_AND_LOAD_currentProject = NULL;
+    }
 }
 
 void SAVE_AND_LOAD_save() {
@@ -101,6 +138,9 @@ void SAVE_AND_LOAD_loadSimspace(char *filename) {
     }
     SAVE_AND_LOAD_currentProject = malloc(strlen(filename) + 1);
     strcpy(SAVE_AND_LOAD_currentProject, filename);
+
+    // add it to the recently used files
+    APPDATA_recordFileAccess(SAVE_AND_LOAD_currentProject);
 
     // load the saved simspace
     SAVE_AND_LOAD_loadSimspace_Format_v1(root);
@@ -231,4 +271,7 @@ void SAVE_AND_LOAD_saveSimspace() {
     // write it to disk
     json_object_to_file_ext(SAVE_AND_LOAD_currentProject, root, JSON_C_TO_STRING_PRETTY);
     json_object_put(root);
+
+    // add it to the recently used files
+    APPDATA_recordFileAccess(SAVE_AND_LOAD_currentProject);
 }

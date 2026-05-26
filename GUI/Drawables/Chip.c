@@ -48,8 +48,8 @@ void DRAWABLES_CHIP_draw(drw_chip_t *me) {
         4 * GRID_zoom,
         -90, 90, 10, BLACK);
 
-    Vector2 size = MeasureTextEx(GUI_computerModern, me->chipSpec->name, zoomedSpacing, 1);
-    DrawTextEx(GUI_computerModern, me->chipSpec->name,
+    Vector2 size = MeasureTextEx(GUI_fonts[COMPUTER_MODERN_150], me->chipSpec->name, zoomedSpacing, 1);
+    DrawTextEx(GUI_fonts[COMPUTER_MODERN_150], me->chipSpec->name,
         (Vector2) {
             wpos.x - zoomedSpacing / 2 + (me->numConnectorsPerRow * zoomedSpacing) / 2 - size.x / 2,
             wpos.y + zoomedSpacing + zoomedSpacing - size.y / 2 + zoomedSpacing * 0.05f
@@ -76,10 +76,10 @@ void DRAWABLES_CHIP_drawPinLabel(drw_chip_t *me, bool isTopRow, int index) {
 
     float zoomedSpacing = GRID_SPACING * GRID_zoom;
     Vector2 wpos = LIB_worldSpaceToScreenSpace(me->position);
-    Vector2 size = MeasureTextEx(GUI_computerModern, me->chipSpec->pinLabels[lblIdx].label, zoomedSpacing / 3, 1);
+    Vector2 size = MeasureTextEx(GUI_fonts[COMPUTER_MODERN_150], me->chipSpec->pinLabels[lblIdx].label, zoomedSpacing / 3, 1);
 
     if (isTopRow) {
-        DrawTextEx(GUI_computerModern, me->chipSpec->pinLabels[lblIdx].label,
+        DrawTextEx(GUI_fonts[COMPUTER_MODERN_150], me->chipSpec->pinLabels[lblIdx].label,
            (Vector2) {
                wpos.x + index * zoomedSpacing - size.x / 2,
                wpos.y + 1.06f * zoomedSpacing
@@ -96,7 +96,7 @@ void DRAWABLES_CHIP_drawPinLabel(drw_chip_t *me, bool isTopRow, int index) {
            );
         }
     } else {
-        DrawTextEx(GUI_computerModern, me->chipSpec->pinLabels[lblIdx].label,
+        DrawTextEx(GUI_fonts[COMPUTER_MODERN_150], me->chipSpec->pinLabels[lblIdx].label,
            (Vector2) {
                wpos.x + index * zoomedSpacing - size.x / 2,
                wpos.y + 2.94f * zoomedSpacing - size.y
