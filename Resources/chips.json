@@ -24,7 +24,7 @@
       7, 14
     ],
     "Lua": {
-      "Script": "74LS00.lua",
+      "Script": "Stateless/74LS00.lua",
       "IsStateful": false
     }
   },
@@ -53,7 +53,145 @@
       7, 14
     ],
     "Lua": {
-      "Script": "74LS02.lua",
+      "Script": "Stateless/74LS02.lua",
+      "IsStateful": false
+    }
+  },
+  {
+    "ID": "SIM3-74LS04",
+    "Name": "74LS04",
+    "Function": "6x 1-Input-NOT",
+    "Pins": 14,
+    "PinLabels": [
+      { "Text": "A1"  },
+      { "Text": "Y1"  },
+      { "Text": "A2"  },
+      { "Text": "Y2"  },
+      { "Text": "A3"  },
+      { "Text": "Y3"  },
+      { "Text": "GND" },
+      { "Text": "Y4"  },
+      { "Text": "A4"  },
+      { "Text": "Y5"  },
+      { "Text": "A5"  },
+      { "Text": "Y6"  },
+      { "Text": "A6"  },
+      { "Text": "VCC" }
+    ],
+    "Power": [
+      7, 14
+    ],
+    "Lua": {
+      "Script": "Stateless/74LS04.lua",
+      "IsStateful": false
+    }
+  },
+  {
+    "ID": "SIM3-74LS08",
+    "Name": "74LS08",
+    "Function": "4x 2-Input-AND",
+    "Pins": 14,
+    "PinLabels": [
+      { "Text": "A1"  },
+      { "Text": "B1"  },
+      { "Text": "Y1"  },
+      { "Text": "A2"  },
+      { "Text": "B2"  },
+      { "Text": "Y2"  },
+      { "Text": "GND" },
+      { "Text": "Y3"  },
+      { "Text": "A3"  },
+      { "Text": "B3"  },
+      { "Text": "Y4"  },
+      { "Text": "A4"  },
+      { "Text": "B4"  },
+      { "Text": "VCC" }
+    ],
+    "Power": [
+      7, 14
+    ],
+    "Lua": {
+      "Script": "Stateless/74LS08.lua",
+      "IsStateful": false
+    }
+  },
+  {
+    "ID": "SIM3-74LS32",
+    "Name": "74LS32",
+    "Function": "4x 2-Input-OR",
+    "Pins": 14,
+    "PinLabels": [
+      { "Text": "A1"  },
+      { "Text": "B1"  },
+      { "Text": "Y1"  },
+      { "Text": "A2"  },
+      { "Text": "B2"  },
+      { "Text": "Y2"  },
+      { "Text": "GND" },
+      { "Text": "Y3"  },
+      { "Text": "A3"  },
+      { "Text": "B3"  },
+      { "Text": "Y4"  },
+      { "Text": "A4"  },
+      { "Text": "B4"  },
+      { "Text": "VCC" }
+    ],
+    "Power": [
+      7, 14
+    ],
+    "Lua": {
+      "Script": "Stateless/74LS32.lua",
+      "IsStateful": false
+    }
+  },
+  {
+    "ID": "SIM3-74LS48",
+    "Name": "74LS48",
+    "Function": "BCD To 7 Seg. Conv.",
+    "Pins": 16,
+    "PinLabels": [
+      { "Text": "B"   },
+      { "Text": "C"   },
+      { "Text": "LT"  , "ActiveLow": true  },
+      { "Text": "BIRB", "ActiveLow": true  },
+      { "Text": "RBI",  "ActiveLow": true  },
+      { "Text": "D"   },
+      { "Text": "A"   },
+      { "Text": "GND" },
+      { "Text": "e"   },
+      { "Text": "d"   },
+      { "Text": "c"   },
+      { "Text": "b"   },
+      { "Text": "a"   },
+      { "Text": "g"   },
+      { "Text": "f"   },
+      { "Text": "VCC" }
+    ],
+    "Power": [
+      8, 16
+    ],
+    "Lua": {
+      "Script": "Stateless/74LS48.lua",
+      "IsStateful": false
+    }
+  },
+  {
+    "ID": "SIM3-CLOCK",
+    "Name": "CLK",
+    "Function": "Clock signal generator",
+    "Pins": 6,
+    "PinLabels": [
+      { "Text": "A"   },
+      { "Text": "B"   },
+      { "Text": "EN"  },
+      { "Text": "OUT" },
+      { "Text": "C"   },
+      { "Text": "D"   }
+    ],
+    "Power": [
+    ],
+    "Lua": {
+      "Script": "Stateless/CLOCK.lua",
       "IsStateful": false
     }
   },
@@ -84,7 +222,71 @@
       8, 16
     ],
     "Lua": {
-      "Script": "74LS161.lua",
+      "Script": "Stateful/74LS161.lua",
+      "IsStateful": true,
+      "ClockPin": 2
+    }
+  },
+  {
+    "ID": "SIM3-74LS162",
+    "Name": "74LS162",
+    "Function": "4-Bit Decade Counter",
+    "Pins": 16,
+    "PinLabels": [
+      { "Text": "CLR", "ActiveLow": true },
+      { "Text": "CLK" },
+      { "Text": "A"   },
+      { "Text": "B"   },
+      { "Text": "C"   },
+      { "Text": "D"   },
+      { "Text": "ENP" },
+      { "Text": "GND" },
+      { "Text": "LOAD", "ActiveLow": true },
+      { "Text": "ENT" },
+      { "Text": "QD"  },
+      { "Text": "QC"  },
+      { "Text": "QB"  },
+      { "Text": "QA"  },
+      { "Text": "RCO" },
+      { "Text": "VCC" }
+    ],
+    "Power": [
+      8, 16
+    ],
+    "Lua": {
+      "Script": "Stateful/74LS162.lua",
+      "IsStateful": true,
+      "ClockPin": 2
+    }
+  },
+  {
+    "ID": "SIM3-74LS164",
+    "Name": "74LS164",
+    "Function": "8-Bit SIPO Shift Reg.",
+    "Pins": 16,
+    "PinLabels": [
+      { "Text": "CLR", "ActiveLow": true },
+      { "Text": "CLK" },
+      { "Text": "A"   },
+      { "Text": "B"   },
+      { "Text": "C"   },
+      { "Text": "D"   },
+      { "Text": "ENP" },
+      { "Text": "GND" },
+      { "Text": "LOAD", "ActiveLow": true },
+      { "Text": "ENT" },
+      { "Text": "QD"  },
+      { "Text": "QC"  },
+      { "Text": "QB"  },
+      { "Text": "QA"  },
+      { "Text": "RCO" },
+      { "Text": "VCC" }
+    ],
+    "Power": [
+      8, 16
+    ],
+    "Lua": {
+      "Script": "Stateful/74LS162.lua",
       "IsStateful": true,
       "ClockPin": 2
     }

@@ -1,6 +1,6 @@
 -- ---------------------------------------------------------------------------------------------------------------------
--- Logic Implementation for the 74LS00, 4x 2 input NOR gate block
--- /red - 2026-05-15
+-- Logic Implementation for the 74LS32, 4x 2 input OR gate block
+-- /red - 2026-05-25
 -- ---------------------------------------------------------------------------------------------------------------------
 function PinSetup()
 
@@ -22,7 +22,7 @@ function Step()
 
     -- go through all gate pairs and do the logic
     for i = 1, 4 do
-        pins["Y" .. i].pin = NAND(
+        pins["Y" .. i].pin = OR(
                 pins["A" .. i].wire,
                 pins["B" .. i].wire
         );
@@ -30,6 +30,6 @@ function Step()
 
 end
 
-function NAND(a, b)
-    return not (a == PIN_HIGH and b == PIN_HIGH);
+function OR(a, b)
+    return a == PIN_HIGH or b == PIN_HIGH;
 end

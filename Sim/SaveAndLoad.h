@@ -10,6 +10,9 @@
 extern char *SAVE_AND_LOAD_currentProject;
 
 void SAVE_AND_LOAD_init();
+void SAVE_AND_LOAD_save();
+void SAVE_AND_LOAD_saveAs();
+void SAVE_AND_LOAD_load();
 void SAVE_AND_LOAD_loadSimspace();
 void SAVE_AND_LOAD_loadSimspace_Format_v1(json_object *root);
 void SAVE_AND_LOAD_saveSimspace();

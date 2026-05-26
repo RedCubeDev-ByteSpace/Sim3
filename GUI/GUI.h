@@ -9,7 +9,7 @@
 #define INITIAL_WINDOW_WIDTH 800
 #define INITIAL_WINDOW_HEIGHT 600
 
-#define TARGET_FPS 60
+#define TARGET_FPS 100
 
 #define MAX_ZOOM 25
 #define MIN_ZOOM 0.3f
@@ -26,6 +26,7 @@ extern Font GUI_computerModern;
 extern Font GUI_computerModern55;
 extern Font GUI_computerModern20;
 extern Font GUI_computerModern16;
+extern Font GUI_computerModern11;
 void GUI_init();
 
 float LIB_lerp(float a, float b, float f);

@@ -5,33 +5,85 @@
 #include "SaveAndLoad.h"
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <json-c/json_object.h>
 #include <json-c/json_util.h>
 
 #include "SimulationSpace.h"
-#include "Components/Chip.h"
+#include "../GUI/Lib/tinyfiledialogs.h"
 
 char *SAVE_AND_LOAD_currentProject;
 
 void SAVE_AND_LOAD_init() {
-    SAVE_AND_LOAD_currentProject = "./temp.s3";
-    SAVE_AND_LOAD_loadSimspace();
+    SAVE_AND_LOAD_currentProject = NULL;
 }
 
-void SAVE_AND_LOAD_loadSimspace() {
-    if (SAVE_AND_LOAD_currentProject == NULL) return;
+void SAVE_AND_LOAD_save() {
+    if (SAVE_AND_LOAD_currentProject == NULL) {
+        SAVE_AND_LOAD_saveAs();
+        return;
+    }
+
+    SAVE_AND_LOAD_saveSimspace();
+}
+
+void SAVE_AND_LOAD_saveAs() {
+
+    char *selectedFileName;
+    char *filenameFilter = "*.s3";
+
+    // let the user pick a location to save this project at
+    selectedFileName = tinyfd_saveFileDialog(
+        "Select a location for this Project",
+        NULL,
+        1, &filenameFilter,
+        "sim3 Project"
+        );
+
+    // if the user cancelled -> dont do anything
+    if (selectedFileName == NULL) return;
+
+    // otherwise -> remember the path and save the file
+    SAVE_AND_LOAD_currentProject = malloc(strlen(selectedFileName) + 1);
+    strcpy(SAVE_AND_LOAD_currentProject, selectedFileName);
+
+    SAVE_AND_LOAD_saveSimspace();
+}
+
+void SAVE_AND_LOAD_load() {
+    char *selectedFileName;
+    char *filenameFilter = "*.s3";
+
+    // let the user open an s3 file
+    selectedFileName = tinyfd_openFileDialog(
+        "Select a sim3 Project to open",
+        NULL,
+        1, &filenameFilter,
+        "sim3 Project",
+        0
+    );
+
+    // nothing was selected
+    if (selectedFileName == NULL) return;
+
+    // otherwise: try to open the file
+    SAVE_AND_LOAD_loadSimspace(selectedFileName);
+}
+
+void SAVE_AND_LOAD_loadSimspace(char *filename) {
 
     // open the savefile as a json object
-    json_object *root = json_object_from_file(SAVE_AND_LOAD_currentProject);
+    json_object *root = json_object_from_file(filename);
     if (root == NULL) {
-        printf("Unable to open savefile '%s'!", SAVE_AND_LOAD_currentProject);
+        printf("Unable to open savefile '%s'!", filename);
         return;
     }
 
     // find out which file format version this is
     json_object *metadata = json_object_object_get(root, "metadata");
     if (metadata == NULL) {
-        printf("Savefile '%s' doesnt follow the S3 format specification!", SAVE_AND_LOAD_currentProject);
+        printf("Savefile '%s' doesnt follow the S3 format specification!", filename);
         json_object_put(root);
         return;
     }
@@ -42,6 +94,13 @@ void SAVE_AND_LOAD_loadSimspace() {
         json_object_put(root);
         return;
     }
+
+    // remember the filename
+    if (SAVE_AND_LOAD_currentProject != NULL) {
+        free(SAVE_AND_LOAD_currentProject);
+    }
+    SAVE_AND_LOAD_currentProject = malloc(strlen(filename) + 1);
+    strcpy(SAVE_AND_LOAD_currentProject, filename);
 
     // load the saved simspace
     SAVE_AND_LOAD_loadSimspace_Format_v1(root);

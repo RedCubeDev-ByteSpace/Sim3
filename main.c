@@ -5,6 +5,7 @@
 #include "GUI/GUI.h"
 #include "GUI/Grid.h"
 #include "GUI/Input.h"
+#include "GUI/Statusbar.h"
 #include "GUI/Menu/Menu.h"
 #include "Sim/SimulationResources.h"
 #include "Sim/SimulationSpace.h"
@@ -43,6 +44,7 @@ int main(void) {
             INPUT_process();
             BENCH_process();
             SIMSPACE_process();
+            STATUSBAR_process();
         }
 
         // -------------------------------------------------------------------------------------------------------------
@@ -58,6 +60,9 @@ int main(void) {
             // draw all components
             DRAWABLES_drawQueue();
             BENCH_draw();
+
+            // draw the statusbar
+            STATUSBAR_draw();
         }
         else {
             MENU_draw();

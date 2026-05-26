@@ -78,8 +78,20 @@ void BENCH_process() {
     // -----------------------------------------------------------------------------------------------------------------
     // CTRL + S saves this file
     if ((IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) && IsKeyReleased(KEY_S)) {
-        SAVE_AND_LOAD_saveSimspace();
+
+        if (IsKeyDown(KEY_LEFT_ALT) || IsKeyDown(KEY_RIGHT_ALT)) {
+            SAVE_AND_LOAD_saveAs();
+        } else {
+            SAVE_AND_LOAD_save();
+        }
     }
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // CTRL + S saves this file
+    if ((IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) && IsKeyReleased(KEY_O)) {
+        SAVE_AND_LOAD_load();
+    }
+
 
     // -----------------------------------------------------------------------------------------------------------------
     // Mode selection buttons

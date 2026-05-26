@@ -53,4 +53,7 @@ add_executable(sim3 main.c
         Sim/Json/Deserialization.c
         Sim/Components/ChipSpec.h
         GUI/Menu/Menu.c
-        GUI/Menu/Menu.h)
+        GUI/Menu/Menu.h
+        GUI/Statusbar.c
+        GUI/Statusbar.h
+        GUI/Lib/tinyfiledialogs.c)

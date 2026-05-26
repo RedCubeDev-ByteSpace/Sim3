@@ -14,6 +14,7 @@ Font GUI_computerModern;
 Font GUI_computerModern55;
 Font GUI_computerModern20;
 Font GUI_computerModern16;
+Font GUI_computerModern11;
 
 void GUI_init() {
     GUI_appState = APP_STATE_SIM;
@@ -22,10 +23,12 @@ void GUI_init() {
     GUI_computerModern55 = LoadFontEx("../Resources/cmunbx.ttf", 55, NULL, 0);
     GUI_computerModern20 = LoadFontEx("../Resources/cmunbx.ttf", 20, NULL, 0);
     GUI_computerModern16 = LoadFontEx("../Resources/cmunbx.ttf", 16, NULL, 0);
+    GUI_computerModern11 = LoadFontEx("../Resources/cmunbx.ttf", 11, NULL, 0);
     SetTextureFilter(GUI_computerModern.texture, TEXTURE_FILTER_BILINEAR);
     SetTextureFilter(GUI_computerModern55.texture, TEXTURE_FILTER_BILINEAR);
     SetTextureFilter(GUI_computerModern20.texture, TEXTURE_FILTER_BILINEAR);
     SetTextureFilter(GUI_computerModern16.texture, TEXTURE_FILTER_BILINEAR);
+    SetTextureFilter(GUI_computerModern11.texture, TEXTURE_FILTER_BILINEAR);
 }
 
 float LIB_lerp(float a, float b, float f)
