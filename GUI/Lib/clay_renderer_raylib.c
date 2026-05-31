@@ -9,33 +9,13 @@
 #include "string.h"
 #include "stdio.h"
 #include "stdlib.h"
+#include "../Lib/clay_renderer_raylib.h"
 
 #define RAYLIB_VECTOR2_TO_CLAY_VECTOR2(vector) (Clay_Vector2) { .x = vector.x, .y = vector.y }
 #define CLAY_RECTANGLE_TO_RAYLIB_RECTANGLE(rectangle) (Rectangle) { .x = rectangle.x, .y = rectangle.y, .width = rectangle.width, .height = rectangle.height }
 #define CLAY_COLOR_TO_RAYLIB_COLOR(color) (Color) { .r = (unsigned char)roundf(color.r), .g = (unsigned char)roundf(color.g), .b = (unsigned char)roundf(color.b), .a = (unsigned char)roundf(color.a) }
 
 Camera Raylib_camera;
-
-typedef enum
-{
-    CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL
-} CustomLayoutElementType;
-
-typedef struct
-{
-    Model model;
-    float scale;
-    Vector3 position;
-    Matrix rotation;
-} CustomLayoutElement_3DModel;
-
-typedef struct
-{
-    CustomLayoutElementType type;
-    union {
-        CustomLayoutElement_3DModel model;
-    } customData;
-} CustomLayoutElement;
 
 const char* overlayShaderCode = "#version 330\n"
                                 "\n"
@@ -302,7 +282,7 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts)
             }
             case CLAY_RENDER_COMMAND_TYPE_CUSTOM: {
                 Clay_CustomRenderData *config = &renderCommand->renderData.custom;
-                CustomLayoutElement *customElement = (CustomLayoutElement *)config->customData;
+                CustomLayoutElement *customElement = (CustomLayoutElement*)config->customData;
                 if (!customElement) continue;
                 switch (customElement->type) {
                     case CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL: {
@@ -314,6 +294,52 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts)
                         EndMode3D();
                         break;
                     }
+                    case CUSTOM_LAYOUT_ELEMENT_TOOL_ICON:
+
+                        switch (customElement->customData.icon.iconType) {
+                        case 1: // Drawing Wire Mode
+                            DrawLineEx((Vector2){   renderCommand->boundingBox.x + 5, renderCommand->boundingBox.y + 5}, (Vector2){renderCommand->boundingBox.x + renderCommand->boundingBox.width - 5, renderCommand->boundingBox.y + renderCommand->boundingBox.height - 5}, 2, customElement->customData.icon.active ? WHITE : BLACK);
+                            break;
+
+                        case 2: // Fixed Contact Placement Mode
+                            DrawRectangleLinesEx((Rectangle){
+                                renderCommand->boundingBox.x + 5, renderCommand->boundingBox.y + 5, 20, 20
+                            }, 2, customElement->customData.icon.active ? WHITE : BLACK);
+
+                            DrawCircle(renderCommand->boundingBox.x + 15, renderCommand->boundingBox.y + 15, 5, customElement->customData.icon.active ? WHITE : BLACK);
+                            break;
+
+                        case 3: // LED Placement Mode
+                            DrawCircle(renderCommand->boundingBox.x + 15, renderCommand->boundingBox.y + 15, 9, customElement->customData.icon.active ? WHITE : BLACK);
+                            DrawCircle(renderCommand->boundingBox.x + 15, renderCommand->boundingBox.y + 15, 7, !customElement->customData.icon.active ? WHITE : BLACK);
+                            DrawCircle(renderCommand->boundingBox.x + 15, renderCommand->boundingBox.y + 15, 5, customElement->customData.icon.active ? WHITE : BLACK);
+                            break;
+
+                        case 4: // Chip Placement Mode
+                            DrawRectangleLinesEx((Rectangle){
+                                renderCommand->boundingBox.x + 5, renderCommand->boundingBox.y + 10, 20, 10
+                            }, 2, customElement->customData.icon.active ? WHITE : BLACK);
+
+                            DrawLineEx((Vector2){ renderCommand->boundingBox.x + 10, renderCommand->boundingBox.y + 5}, (Vector2){ renderCommand->boundingBox.x + 10, renderCommand->boundingBox.y + 10}, 1, customElement->customData.icon.active ? WHITE : BLACK);
+                            DrawLineEx((Vector2){ renderCommand->boundingBox.x + 15, renderCommand->boundingBox.y + 5}, (Vector2){ renderCommand->boundingBox.x + 15, renderCommand->boundingBox.y + 10}, 1, customElement->customData.icon.active ? WHITE : BLACK);
+                            DrawLineEx((Vector2){ renderCommand->boundingBox.x + 20, renderCommand->boundingBox.y + 5}, (Vector2){ renderCommand->boundingBox.x + 20, renderCommand->boundingBox.y + 10}, 1, customElement->customData.icon.active ? WHITE : BLACK);
+                            DrawLineEx((Vector2){ renderCommand->boundingBox.x + 10, renderCommand->boundingBox.y + 20}, (Vector2){renderCommand->boundingBox.x + 10, renderCommand->boundingBox.y + 25}, 1, customElement->customData.icon.active ? WHITE : BLACK);
+                            DrawLineEx((Vector2){ renderCommand->boundingBox.x + 15, renderCommand->boundingBox.y + 20}, (Vector2){renderCommand->boundingBox.x + 15, renderCommand->boundingBox.y + 25}, 1, customElement->customData.icon.active ? WHITE : BLACK);
+                            DrawLineEx((Vector2){ renderCommand->boundingBox.x + 20, renderCommand->boundingBox.y + 20}, (Vector2){renderCommand->boundingBox.x + 20, renderCommand->boundingBox.y + 25}, 1, customElement->customData.icon.active ? WHITE : BLACK);
+
+                            break;
+
+                        case 5: // Trash Mode
+                            DrawLineEx((Vector2){renderCommand->boundingBox.x +  7, renderCommand->boundingBox.y + 10}, (Vector2){renderCommand->boundingBox.x + 10,  renderCommand->boundingBox.y + 25}, 2, customElement->customData.icon.active ? WHITE : BLACK);
+                            DrawLineEx((Vector2){renderCommand->boundingBox.x + 23, renderCommand->boundingBox.y + 10}, (Vector2){renderCommand->boundingBox.x + 20,  renderCommand->boundingBox.y + 25}, 2, customElement->customData.icon.active ? WHITE : BLACK);
+                            DrawLineEx((Vector2){renderCommand->boundingBox.x + 10, renderCommand->boundingBox.y + 25}, (Vector2){renderCommand->boundingBox.x + 20,  renderCommand->boundingBox.y + 25}, 2, customElement->customData.icon.active ? WHITE : BLACK);
+                            DrawLineEx((Vector2){renderCommand->boundingBox.x +  7, renderCommand->boundingBox.y + 10}, (Vector2){renderCommand->boundingBox.x + 23,  renderCommand->boundingBox.y + 10}, 2, customElement->customData.icon.active ? WHITE : BLACK);
+                            DrawLineEx((Vector2){renderCommand->boundingBox.x +  7, renderCommand->boundingBox.y + 7 }, (Vector2){renderCommand->boundingBox.x + 23,  renderCommand->boundingBox.y +  7}, 2, customElement->customData.icon.active ? WHITE : BLACK);
+
+                            break;
+                        }
+
+                        break;
                     default: break;
                 }
                 break;

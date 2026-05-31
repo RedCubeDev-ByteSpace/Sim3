@@ -108,6 +108,7 @@ int main(void) {
             // draw all components
             DRAWABLES_drawQueue();
 
+            // draw the bench cursors
             BENCH_draw();
         }
         else {

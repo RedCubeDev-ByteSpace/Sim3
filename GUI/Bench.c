@@ -14,9 +14,14 @@
 #include "Drawables/Wire.h"
 #include "../Sim/Components/Connection.h"
 #include "../Sim/SaveAndLoad.h"
+#include "Lib/clay.h"
+#include "Lib/clay_renderer_raylib.h"
 
 // ---------------------------------------------------------------------------------------------------------------------
 bench_working_mode_t BENCH_benchMode;
+CustomLayoutElement toolIcons[NUM_MODES];
+bool isCursorOnOverlay;
+bool isCursorOnOverlayThisFrame;
 float cursorRotation;
 int pieceRotation;
 int activeColor;
@@ -35,12 +40,20 @@ drw_led_t *newLED;
 // Data for chip placement
 int selectedChip = 0;
 drw_chip_t *newChip;
+// ---------------------------------------------------------------------------------------------------------------------
+bench_tab_mode_t currentTab;
 
 void BENCH_init() {
     BENCH_benchMode = IDLE;
+    currentTab = TAB_CLOSED;
     cursorRotation = 0;
     pieceRotation = 0;
     activeColor = 0;
+
+    for (int i = 0; i < NUM_MODES; ++i) {
+        toolIcons[i].type = CUSTOM_LAYOUT_ELEMENT_TOOL_ICON;
+        toolIcons[i].customData.icon.iconType = i;
+    }
 
     thisConnection = NULL;
     hasAttachmentVertex = false;
@@ -56,11 +69,8 @@ void BENCH_init() {
 }
 
 void BENCH_process() {
-    Vector2 mousePos = GetMousePosition();
-    Vector2 pos = LIB_screenSpaceToWorldSpace(mousePos);
-    Vector2 wpos, hpos;
-    wpos = LIB_roundificateToWholePoint(pos);
-    hpos = LIB_roundificateToHalfPoint(pos);
+    isCursorOnOverlayThisFrame = isCursorOnOverlay;
+    isCursorOnOverlay = false;
 
     // -----------------------------------------------------------------------------------------------------------------
     // ESC shortcut to exit out of all modes
@@ -86,133 +96,14 @@ void BENCH_process() {
         }
     }
 
-    // -----------------------------------------------------------------------------------------------------------------
-    // CTRL + S saves this file
-    if ((IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) && IsKeyReleased(KEY_O)) {
-        SAVE_AND_LOAD_load();
-    }
+    // only process mouse input when the cursor is not inside a clay panel
+    if (isCursorOnOverlayThisFrame) return;
 
-
-    // -----------------------------------------------------------------------------------------------------------------
-    // Mode selection buttons
-    if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
-
-        // "Wire Mode" Button
-        if (LIB_IsVector2InRectangle(mousePos, (Rectangle){ 5, 5, 30, 30})) {
-
-            // if we're not currently in wire mode -> go there
-            if (BENCH_benchMode != DRAWING_WIRE) {
-                BENCH_benchMode = DRAWING_WIRE;
-
-                hasAttachmentVertex = false;
-
-                if (thisConnection != NULL && thisConnection->lstVectorPairs.length == 0) {
-                    SIM_CONNECTION_unload(thisConnection);
-                    free(thisConnection);
-                }
-                thisConnection = NULL;
-            }
-
-            // otherwise, if we are: switch to idle
-            else {
-                BENCH_benchMode = IDLE;
-            }
-
-            return;
-        }
-
-        // "Fixed Contact Place" Button
-        if (LIB_IsVector2InRectangle(mousePos, (Rectangle){ 5, 35 + 5, 30, 30})) {
-
-            // if we're not currently in this mode -> go there
-            if (BENCH_benchMode != PLACE_FIXED_CONTACT) {
-                BENCH_benchMode = PLACE_FIXED_CONTACT;
-            }
-
-            // otherwise, if we are: switch to idle
-            else {
-                BENCH_benchMode = IDLE;
-            }
-
-            return;
-        }
-
-        // "Place LED" Button
-        if (LIB_IsVector2InRectangle(mousePos, (Rectangle){ 5, 2 * 35 + 5, 30, 30})) {
-
-            // if we're not currently in this mode -> go there
-            if (BENCH_benchMode != PLACE_LED) {
-                BENCH_benchMode = PLACE_LED;
-            }
-
-            // otherwise, if we are: switch to idle
-            else {
-                BENCH_benchMode = IDLE;
-            }
-
-            return;
-        }
-
-        // "Chip placement" Button
-        if (LIB_IsVector2InRectangle(mousePos, (Rectangle){ 5, 3 * 35 + 5, 30, 30})) {
-
-            // if we're not currently in this mode -> go there
-            if (BENCH_benchMode != PLACE_CHIP) {
-                BENCH_benchMode = PLACE_CHIP;
-            }
-
-            // otherwise, if we are: switch to idle
-            else {
-                BENCH_benchMode = IDLE;
-            }
-
-            return;
-        }
-
-        // "Delete" Button
-        if (LIB_IsVector2InRectangle(mousePos, (Rectangle){ 5, 4 * 35 + 5, 30, 30})) {
-
-            // if we're not currently in this mode -> go there
-            if (BENCH_benchMode != DELETION) {
-                BENCH_benchMode = DELETION;
-            }
-
-            // otherwise, if we are: switch to idle
-            else {
-                BENCH_benchMode = IDLE;
-            }
-
-            return;
-        }
-
-        // Color buttons!!!
-        for (int i = 0; i < NUM_COLORS; ++i) {
-            if (LIB_IsVector2InRectangle(mousePos, (Rectangle){i*35 + 40, 5, 30, 30})) {
-                activeColor = i;
-                return;
-            }
-        }
-    }
-
-    // -----------------------------------------------------------------------------------------------------------------
-    // Chip selection buttons
-    if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
-        int yOffset = 5;
-        for (int i = 0; i < SIMRES_numChipSpecs; ++i) {
-
-            if (LIB_IsVector2InRectangle(mousePos, (Rectangle){ GUI_WindowSize.x - 155, yOffset, 150, 30})) {
-                selectedChip = i;
-
-                free(newChip);
-                newChip = malloc(sizeof(drw_chip_t));
-                DRAWABLES_CHIP_init(newChip, (Vector2){0,0}, &SIMRES_chipSpecifications[i], SIMRES_chipSpecifications[i].numPins / 2);
-
-                return;
-            }
-
-            yOffset += 35;
-        }
-    }
+    Vector2 mousePos = GetMousePosition();
+    Vector2 pos = LIB_screenSpaceToWorldSpace(mousePos);
+    Vector2 wpos, hpos;
+    wpos = LIB_roundificateToWholePoint(pos);
+    hpos = LIB_roundificateToHalfPoint(pos);
 
     // -------------------------------------------------------------------------------------------
     // Idle mode
@@ -524,6 +415,12 @@ void BENCH_process() {
 
 void BENCH_draw() {
 
+    // is the cursor currently inside a Clay panel
+    // -> not our problem!
+    if (isCursorOnOverlayThisFrame) return;
+
+    // otherwise: draw a nice cursor :)
+
     cursorRotation += GetFrameTime() * 2;
     cursorRotation = cursorRotation > 360 ? 0 : cursorRotation;
 
@@ -577,152 +474,419 @@ void BENCH_draw() {
         if (hasAttachmentVertex)
             DrawLineEx(LIB_worldSpaceToScreenSpace(attachmentVertex), hpos, 0.5f, wireColors[0]);
     }
+}
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Callbacks
+void BENCH_handleLuaTab(Clay_ElementId elementId, Clay_PointerData pointerInfo, void *userData) {
+    if (pointerInfo.state != CLAY_POINTER_DATA_RELEASED_THIS_FRAME) return;
 
-    // -----------------------------------------------------------------------------------------------------------------
-    // Draw Buttons
-    int anchorY = 0;
-
-    // ---------------------------
-    // Line mode button
-    int lineButtonY = anchorY;
-
-    bool fillLineButton = BENCH_benchMode == DRAWING_WIRE || IsKeyDown(KEY_ESCAPE);
-    DrawRectangleRounded((Rectangle){
-        5, anchorY + 5, 30, 30
-    }, 0.1f, 3, fillLineButton ? BLACK : WHITE);
-
-    DrawLineEx((Vector2){10, anchorY + 10}, (Vector2){30,  anchorY + 30}, 2, fillLineButton ? WHITE : BLACK);
-
-    DrawRectangleRoundedLines((Rectangle){
-        5, anchorY + 5, 30, 30
-    }, 0.1f, 3, 1, BLACK);
-
-
-    // ---------------------------
-    // Fixed contact placement mode button
-    anchorY += 35;
-
-    bool fillFixedContactButton = BENCH_benchMode == PLACE_FIXED_CONTACT || IsKeyDown(KEY_ESCAPE);
-    DrawRectangleRounded((Rectangle){
-        5, anchorY + 5, 30, 30
-    }, 0.1f, 3, fillFixedContactButton ? BLACK : WHITE);
-
-    DrawRectangleLinesEx((Rectangle){
-        10, anchorY + 10, 20, 20
-    }, 2, fillFixedContactButton ? WHITE : BLACK);
-
-    DrawCircle(20, anchorY + 20, 5, fillFixedContactButton ? WHITE : BLACK);
-
-    DrawRectangleRoundedLines((Rectangle){
-        5, anchorY + 5, 30, 30
-    }, 0.1f, 3, 1, BLACK);
-
-    // ---------------------------
-    // Led placement mode button
-    anchorY += 35;
-
-    bool fillLEDButton = BENCH_benchMode == PLACE_LED || IsKeyDown(KEY_ESCAPE);
-    DrawRectangleRounded((Rectangle){
-        5, anchorY + 5, 30, 30
-    }, 0.1f, 3, fillLEDButton ? BLACK : WHITE);
-
-    DrawCircle(20, anchorY + 20, 8, fillLEDButton ? WHITE : BLACK);
-    DrawCircle(20, anchorY + 20, 8 - LINE_THICKNESS, !fillLEDButton ? WHITE : BLACK);
-    DrawCircle(20, anchorY + 20, 5, fillLEDButton ? WHITE : BLACK);
-
-    DrawRectangleRoundedLines((Rectangle){
-        5, anchorY + 5, 30, 30
-    }, 0.1f, 3, 1, BLACK);
-
-    // ---------------------------
-    // Fixed contact placement mode button
-    anchorY += 35;
-
-    bool fillChipButton = BENCH_benchMode == PLACE_CHIP || IsKeyDown(KEY_ESCAPE);
-    DrawRectangleRounded((Rectangle){
-        5, anchorY + 5, 30, 30
-    }, 0.1f, 3, fillChipButton ? BLACK : WHITE);
-
-    DrawRectangleLinesEx((Rectangle){
-        10, anchorY + 15, 20, 10
-    }, 2, fillChipButton ? WHITE : BLACK);
-
-    DrawLineEx((Vector2){ 15, anchorY + 10}, (Vector2){ 15, anchorY + 15}, 1, fillChipButton ? WHITE : BLACK);
-    DrawLineEx((Vector2){ 20, anchorY + 10}, (Vector2){ 20, anchorY + 15}, 1, fillChipButton ? WHITE : BLACK);
-    DrawLineEx((Vector2){ 25, anchorY + 10}, (Vector2){ 25, anchorY + 15}, 1, fillChipButton ? WHITE : BLACK);
-    DrawLineEx((Vector2){ 15, anchorY + 25}, (Vector2){ 15, anchorY + 30}, 1, fillChipButton ? WHITE : BLACK);
-    DrawLineEx((Vector2){ 20, anchorY + 25}, (Vector2){ 20, anchorY + 30}, 1, fillChipButton ? WHITE : BLACK);
-    DrawLineEx((Vector2){ 25, anchorY + 25}, (Vector2){ 25, anchorY + 30}, 1, fillChipButton ? WHITE : BLACK);
-
-    DrawRectangleRoundedLines((Rectangle){
-        5, anchorY + 5, 30, 30
-    }, 0.1f, 3, 1, BLACK);
-
-    // ---------------------------
-    // Delete mode button
-    anchorY += 35;
-
-    bool fillDeleteButton = BENCH_benchMode == DELETION || IsKeyDown(KEY_ESCAPE);
-    DrawRectangleRounded((Rectangle){
-        5, anchorY + 5, 30, 30
-    }, 0.1f, 3, fillDeleteButton ? BLACK : WHITE);
-
-    DrawLineEx((Vector2){12, anchorY + 15}, (Vector2){15,  anchorY + 30}, 2, fillDeleteButton ? WHITE : BLACK);
-    DrawLineEx((Vector2){28, anchorY + 15}, (Vector2){25,  anchorY + 30}, 2, fillDeleteButton ? WHITE : BLACK);
-    DrawLineEx((Vector2){15, anchorY + 30}, (Vector2){25,  anchorY + 30}, 2, fillDeleteButton ? WHITE : BLACK);
-    DrawLineEx((Vector2){12, anchorY + 15}, (Vector2){28,  anchorY + 15}, 2, fillDeleteButton ? WHITE : BLACK);
-    DrawLineEx((Vector2){12, anchorY + 12}, (Vector2){28,  anchorY + 12}, 2, fillDeleteButton ? WHITE : BLACK);
-
-    DrawRectangleRoundedLines((Rectangle){
-        5, anchorY + 5, 30, 30
-    }, 0.1f, 3, 1, BLACK);
-
-    // -----------------------------------------------------------------------------------------------------------------
-    // Draw Chip Buttons
-    anchorY = 0;
-    int width = 150;
-
-    for (int i = 0; i < SIMRES_numChipSpecs; ++i) {
-
-        bool selected = i == selectedChip;
-
-        DrawRectangleRounded((Rectangle){
-            GUI_WindowSize.x - width - 5, anchorY + 5, width, 30
-        }, 0.1f, 3, selected ? BLACK : WHITE);
-
-        DrawRectangleRoundedLines((Rectangle){
-            GUI_WindowSize.x - width - 5, anchorY + 5, width, 30
-        }, 0.1f, 3, 1, BLACK);
-
-        Vector2 size = MeasureTextEx(GUI_fonts[COMPUTER_MODERN_16], SIMRES_chipSpecifications[i].name, 16, 1);
-        DrawTextEx(GUI_fonts[COMPUTER_MODERN_16], SIMRES_chipSpecifications[i].name, (Vector2){ GUI_WindowSize.x - width - 5 + width / 2 - size.x / 2, anchorY + 6 }, 16, 1, !selected ? BLACK : WHITE);
-        size = MeasureTextEx(GUI_fonts[COMPUTER_MODERN_20], SIMRES_chipSpecifications[i].function, 16, 1);
-        DrawTextEx(GUI_fonts[COMPUTER_MODERN_20], SIMRES_chipSpecifications[i].function, (Vector2){ GUI_WindowSize.x - width - 5 + width / 2 - size.x / 2, anchorY + 18 }, 16, 1, !selected ? BLACK : WHITE);
-
-        anchorY += 35;
-    }
-
-    // -----------------------------------------------------------------------------------------------------------------
-    // If in line mode: draw the color selection thingamabob
-    if (BENCH_benchMode == DRAWING_WIRE) {
-        for (int i = 0; i < NUM_COLORS; ++i) {
-            bool fillColorButton = activeColor == i;
-            int offsetX = 35 + 35 * i;
-
-            DrawRectangleRounded((Rectangle){
-                offsetX + 5, lineButtonY + 5, 30, 30
-            }, 0.1f, 3, fillColorButton ? BLACK : WHITE);
-
-            DrawCircle(offsetX + 20, lineButtonY + 20, 10, wireColors[i]);
-
-            DrawRectangleRoundedLines((Rectangle){
-                offsetX + 5, lineButtonY + 5, 30, 30
-            }, 0.1f, 3, 1, BLACK);
-        }
+    if (currentTab == TAB_LUA) {
+        currentTab = TAB_CLOSED;
+    } else {
+        currentTab = TAB_LUA;
     }
 }
+void BENCH_handleSerialTab(Clay_ElementId elementId, Clay_PointerData pointerInfo, void *userData) {
+    if (pointerInfo.state != CLAY_POINTER_DATA_RELEASED_THIS_FRAME) return;
+
+    if (currentTab == TAB_SERIAL) {
+        currentTab = TAB_CLOSED;
+    } else {
+        currentTab = TAB_SERIAL;
+    }
+}
+void BENCH_handleOscilloscopeTab(Clay_ElementId elementId, Clay_PointerData pointerInfo, void *userData) {
+    if (pointerInfo.state != CLAY_POINTER_DATA_RELEASED_THIS_FRAME) return;
+
+    if (currentTab == TAB_OSCILLOSCOPE) {
+        currentTab = TAB_CLOSED;
+    } else {
+        currentTab = TAB_OSCILLOSCOPE;
+    }
+}
+void BENCH_handleColorSelection(Clay_ElementId elementId, Clay_PointerData pointerInfo, void *userData) {
+    if (pointerInfo.state != CLAY_POINTER_DATA_RELEASED_THIS_FRAME) return;
+    activeColor = (int)userData;
+}
+void BENCH_handleModeSelection(Clay_ElementId elementId, Clay_PointerData pointerInfo, void *userData) {
+    if (pointerInfo.state != CLAY_POINTER_DATA_RELEASED_THIS_FRAME) return;
+
+    bench_working_mode_t mode = (bench_working_mode_t)(int)userData;
+
+    if (BENCH_benchMode == mode) {
+        BENCH_benchMode = IDLE;
+    } else {
+
+        // set up wire drawing when the mode is selected
+        if (mode == DRAWING_WIRE && BENCH_benchMode != DRAWING_WIRE) {
+            hasAttachmentVertex = false;
+
+            if (thisConnection != NULL && thisConnection->lstVectorPairs.length == 0) {
+                SIM_CONNECTION_unload(thisConnection);
+                free(thisConnection);
+            }
+            thisConnection = NULL;
+        }
+
+        BENCH_benchMode = mode;
+    }
+}
+void BENCH_handleCursorOnOverlayPanel(Clay_ElementId elementId, Clay_PointerData pointerInfo, void *userData) {
+    isCursorOnOverlay = true;
+}
+// ---------------------------------------------------------------------------------------------------------------------
 
 void BENCH_layout() {
 
+    CLAY(CLAY_ID("Main"), {
+        .layout = {
+            .sizing = {
+                .width = CLAY_SIZING_GROW(0),
+                .height = CLAY_SIZING_GROW(0)
+            },
+            .layoutDirection = CLAY_TOP_TO_BOTTOM
+        },
+    }) {
+        // CLAY(CLAY_ID("Menubar"), {
+        //     .layout = {
+        //         .sizing = {
+        //             .width = CLAY_SIZING_GROW(0),
+        //             .height = CLAY_SIZING_FIT(30)
+        //         }
+        //     },
+        //     .border = {
+        //         .width = {
+        //             .bottom = 1
+        //         },
+        //         .color = RAYLIB_COLOR_TO_CLAY_COLOR(BLACK)
+        //     },
+        //     .backgroundColor = RAYLIB_COLOR_TO_CLAY_COLOR(WHITE)
+        // }) {
+        //
+        // }
+
+        CLAY(CLAY_ID("Workspace"), {
+            .layout = {
+                .sizing = {
+                    .width = CLAY_SIZING_GROW(0),
+                    .height = CLAY_SIZING_GROW(0)
+                },
+                .layoutDirection = CLAY_LEFT_TO_RIGHT
+            }
+        }) {
+
+            CLAY(CLAY_ID("Workspace_Tools"), {
+                .layout = {
+                    .sizing = {
+                        .width = CLAY_SIZING_GROW(0),
+                        .height = CLAY_SIZING_GROW(0)
+                    },
+                    .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                    .padding = {
+                        10, 10, 10, 10
+                    }
+                }
+            }) {
+
+                CLAY(CLAY_ID("Workspace_Tools_Top"), {
+                    .layout = {
+                        .sizing = {
+                            .width = CLAY_SIZING_GROW(0),
+                            .height = CLAY_SIZING_FIT(0)
+                        }
+                    }
+                }) {
+
+                    CLAY(CLAY_ID("Workspace_Tools_Colors"), {
+                        .layout = {
+                            .sizing = {
+                                .width = CLAY_SIZING_FIT(0),
+                                .height = CLAY_SIZING_FIT(0)
+                            },
+                            .padding = {
+                                10, 10, 10, 10
+                            },
+                            .childAlignment = {
+                                .y = CLAY_ALIGN_Y_CENTER
+                            },
+                            .childGap = 6,
+                            .layoutDirection = CLAY_LEFT_TO_RIGHT
+                        },
+                        .border = {
+                            .width = {
+                               1, 1, 1, 1
+                            },
+                            .color = RAYLIB_COLOR_TO_CLAY_COLOR(BLACK)
+                        },
+                        .backgroundColor = RAYLIB_COLOR_TO_CLAY_COLOR(WHITE)
+                    }) {
+
+                        Clay_OnHover(BENCH_handleCursorOnOverlayPanel, 0);
+
+                        for (int i = 0; i < NUM_COLORS; ++i) {
+
+                            CLAY(CLAY_IDI("Workspace_Tools_Color", i), {
+                                .layout = {
+                                    .sizing = {
+                                        .width = CLAY_SIZING_FIXED(26),
+                                        .height = CLAY_SIZING_FIXED(26)
+                                    },
+                                    .childAlignment = {
+                                        .x = CLAY_ALIGN_X_CENTER,
+                                        .y = CLAY_ALIGN_Y_CENTER
+                                    }
+                                },
+                            }) {
+                                Clay_OnHover(BENCH_handleColorSelection, (void*)i);
+
+                                float radius = (activeColor == i || Clay_Hovered()) ? 26 : 22;
+                                float hradius = radius / 2;
+
+                                CLAY(CLAY_IDI("Workspace_Tools_Color", i), {
+                                    .layout = {
+                                        .sizing = {
+                                            .width = CLAY_SIZING_FIXED(radius),
+                                            .height = CLAY_SIZING_FIXED(radius)
+                                        }
+                                    },
+                                    .cornerRadius = {
+                                        hradius, hradius, hradius, hradius
+                                    },
+                                    .backgroundColor = RAYLIB_COLOR_TO_CLAY_COLOR(wireColors[i])
+                                }) {}
+                            }
+                        }
+
+                    }
+
+                }
+
+                CLAY(CLAY_ID("Workspace_Tools_Main"), {
+                    .layout = {
+                        .sizing = {
+                            .width = CLAY_SIZING_GROW(0),
+                            .height = CLAY_SIZING_GROW(0)
+                        },
+                        .padding = {
+                            .top = 5
+                        }
+                    }
+                }) {
+
+                    CLAY(CLAY_ID("Workspace_Tools_Toolbar"), {
+                        .layout = {
+                            .sizing = {
+                                .width = CLAY_SIZING_FIT(0),
+                                .height = CLAY_SIZING_FIT(0)
+                            },
+                            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                            .padding = {
+                                10, 10, 10, 10
+                            },
+                            .childGap = 10
+                        },
+                        .backgroundColor = RAYLIB_COLOR_TO_CLAY_COLOR(WHITE),
+                        .border = {
+                            .width = {
+                                1, 1, 1, 1
+                            },
+                            .color = RAYLIB_COLOR_TO_CLAY_COLOR(BLACK)
+                        }
+                    }) {
+
+                        Clay_OnHover(BENCH_handleCursorOnOverlayPanel, 0);
+
+                        for (int i = DRAWING_WIRE; i < NUM_MODES; ++i) {
+
+                            CLAY(CLAY_IDI("Workspace_ToolButton", i), {
+                                .layout = {
+                                    .sizing = {
+                                        .width = CLAY_SIZING_FIXED(30),
+                                        .height = CLAY_SIZING_FIXED(30)
+                                    },
+                                },
+                                .cornerRadius = {
+                                    3, 3, 3, 3
+                                },
+                                .backgroundColor = (BENCH_benchMode == i || Clay_Hovered()) ? RAYLIB_COLOR_TO_CLAY_COLOR(BLACK) : RAYLIB_COLOR_TO_CLAY_COLOR(WHITE),
+                                .border = {
+                                    .width = {
+                                        (BENCH_benchMode == i || Clay_Hovered()) ? 0 : 1,
+                                        (BENCH_benchMode == i || Clay_Hovered()) ? 0 : 1,
+                                        (BENCH_benchMode == i || Clay_Hovered()) ? 0 : 1,
+                                        (BENCH_benchMode == i || Clay_Hovered()) ? 0 : 1,
+                                    },
+                                    .color = RAYLIB_COLOR_TO_CLAY_COLOR(GRAY)
+                                }
+                            }) {
+
+                                Clay_OnHover(BENCH_handleModeSelection, (void*)i);
+                                toolIcons[i].customData.icon.active = i == BENCH_benchMode || Clay_Hovered();
+
+                                CLAY(CLAY_IDI("Workspace_Tool_Icon", i), {
+                                    .layout = { .sizing = { CLAY_SIZING_FIXED(30), CLAY_SIZING_FIXED(30) } },
+                                    .custom = {
+                                        .customData = &toolIcons[i]
+                                    }
+                                }) {}
+                            }
+                        }
+
+                    }
+
+                }
+
+            }
+
+            CLAY(CLAY_ID("Workspace_Chips"), {
+                .layout = {
+                    .sizing = {
+                        .width = CLAY_SIZING_FIXED(300),
+                        .height = CLAY_SIZING_GROW(0)
+                    }
+                }
+            }) {
+
+
+
+            }
+
+        }
+
+        CLAY(CLAY_ID("Expandables"), {
+            .layout = {
+                .sizing = {
+                    .width = CLAY_SIZING_GROW(0),
+                    .height = CLAY_SIZING_FIT(0)
+                },
+                .layoutDirection = CLAY_TOP_TO_BOTTOM
+            }
+        }) {
+
+            Clay_OnHover(BENCH_handleCursorOnOverlayPanel, 0);
+
+            CLAY(CLAY_ID("ExpandableTabs"), {
+                .layout = {
+                    .sizing = {
+                        .width = CLAY_SIZING_GROW(0),
+                        .height = CLAY_SIZING_FIT(0)
+                    },
+                    .layoutDirection = CLAY_LEFT_TO_RIGHT
+                }
+            }) {
+
+                Clay_LayoutConfig tabLayout = {
+                    .sizing = {
+                        .width = CLAY_SIZING_FIT(0),
+                        .height = CLAY_SIZING_FIT(0)
+                    },
+                    .padding = {
+                        10, 10, 5, 3
+                    }
+                };
+
+                Clay_BorderElementConfig tabBorder = {
+                    .width = {
+                        .top = 1, .right = 1
+                    },
+                    .color = RAYLIB_COLOR_TO_CLAY_COLOR(BLACK)
+                };
+
+                CLAY(CLAY_ID("ExpandableTabs_Lua"), {
+                    .layout = tabLayout,
+                    .border = tabBorder,
+                    .backgroundColor = (currentTab == TAB_LUA || Clay_Hovered()) ? RAYLIB_COLOR_TO_CLAY_COLOR(BLACK) : RAYLIB_COLOR_TO_CLAY_COLOR(WHITE)
+                }) {
+                    Clay_OnHover(BENCH_handleLuaTab, NULL);
+
+                    CLAY_TEXT(
+                        CLAY_STRING("Lua Console"),
+                        CLAY_TEXT_CONFIG({
+                            .fontId = COMPUTER_MODERN_16,
+                            .fontSize = 16,
+                            .textColor = (currentTab == TAB_LUA || Clay_Hovered()) ? RAYLIB_COLOR_TO_CLAY_COLOR(WHITE) : RAYLIB_COLOR_TO_CLAY_COLOR(BLACK)
+                        })
+                    );
+                }
+
+                CLAY(CLAY_ID("ExpandableTabs_Serial"), {
+                    .layout = tabLayout,
+                    .border = tabBorder,
+                    .backgroundColor = (currentTab == TAB_SERIAL || Clay_Hovered()) ? RAYLIB_COLOR_TO_CLAY_COLOR(BLACK) : RAYLIB_COLOR_TO_CLAY_COLOR(WHITE)
+                }) {
+                    Clay_OnHover(BENCH_handleSerialTab, NULL);
+
+                    CLAY_TEXT(
+                        CLAY_STRING("Serial Console"),
+                        CLAY_TEXT_CONFIG({
+                            .fontId = COMPUTER_MODERN_16,
+                            .fontSize = 16,
+                            .textColor = (currentTab == TAB_SERIAL || Clay_Hovered()) ? RAYLIB_COLOR_TO_CLAY_COLOR(WHITE) : RAYLIB_COLOR_TO_CLAY_COLOR(BLACK)
+                        })
+                    );
+                }
+
+                CLAY(CLAY_ID("ExpandableTabs_Oscilloscope"), {
+                    .layout = tabLayout,
+                    .border = tabBorder,
+                    .backgroundColor = (currentTab == TAB_OSCILLOSCOPE || Clay_Hovered()) ? RAYLIB_COLOR_TO_CLAY_COLOR(BLACK) : RAYLIB_COLOR_TO_CLAY_COLOR(WHITE)
+                }) {
+                    Clay_OnHover(BENCH_handleOscilloscopeTab, NULL);
+
+                    CLAY_TEXT(
+                        CLAY_STRING("Oscilloscope"),
+                        CLAY_TEXT_CONFIG({
+                            .fontId = COMPUTER_MODERN_16,
+                            .fontSize = 16,
+                            .textColor = (currentTab == TAB_OSCILLOSCOPE || Clay_Hovered()) ? RAYLIB_COLOR_TO_CLAY_COLOR(WHITE) : RAYLIB_COLOR_TO_CLAY_COLOR(BLACK)
+                        })
+                    );
+                }
+
+            }
+
+            CLAY(CLAY_ID("ExpandableContainer"), {
+                .layout = {
+                    .sizing = {
+                        .width = CLAY_SIZING_GROW(0),
+                        .height = CLAY_SIZING_FIXED(currentTab == TAB_CLOSED ? 0 : 300)
+                    },
+                },
+                .border = {
+                    .width = {
+                        .top = 1
+                    },
+                    .color = RAYLIB_COLOR_TO_CLAY_COLOR(BLACK)
+                },
+                .backgroundColor = RAYLIB_COLOR_TO_CLAY_COLOR(WHITE),
+                .transition = {
+                    .handler = Clay_EaseOut,
+                    .duration = 0.3f,
+                    .properties = CLAY_TRANSITION_PROPERTY_HEIGHT
+                }
+            }) {
+
+            }
+        }
+
+        CLAY(CLAY_ID("Footer"), {
+            .layout = {
+                .sizing = {
+                    .width = CLAY_SIZING_GROW(0),
+                    .height = CLAY_SIZING_FIT(30)
+                }
+            },
+            .border = {
+                .width = {
+                    .top = 1
+                },
+                .color = RAYLIB_COLOR_TO_CLAY_COLOR(BLACK)
+            },
+            .backgroundColor = RAYLIB_COLOR_TO_CLAY_COLOR(WHITE)
+        }) {
+            Clay_OnHover(BENCH_handleCursorOnOverlayPanel, 0);
+        }
+
+    }
 }

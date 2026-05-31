@@ -61,4 +61,6 @@ add_executable(sim3 main.c
         GUI/Lib/clay.h
         Sim/Json/AppData.c
         Sim/Json/AppData.h
-        Sim/Json/AppDataRecentRecord.c)
+        Sim/Json/AppDataRecentRecord.c
+        GUI/Lib/clay_renderer_raylib.h
+)

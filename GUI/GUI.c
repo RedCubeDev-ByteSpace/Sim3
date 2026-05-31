@@ -13,7 +13,7 @@ app_state_t GUI_appState;
 Font GUI_fonts[5];
 
 void GUI_init() {
-    GUI_appState = APP_STATE_MENU;
+    GUI_appState = APP_STATE_SIM;
 
     GUI_fonts[COMPUTER_MODERN_150] = LoadFontEx("../Resources/cmunbx.ttf", 150, NULL, 0);
     GUI_fonts[COMPUTER_MODERN_55 ] = LoadFontEx("../Resources/cmunbx.ttf", 55, NULL, 0);

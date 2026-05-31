@@ -9,15 +9,22 @@
 #define CURSOR_WIDTH 10
 #define CURSOR_THICKNESS 1.5f
 
+#define NUM_MODES 6
 typedef enum BENCH_WORKING_MODE {
     IDLE,
-    MOVING_POINT,
     DRAWING_WIRE,
     PLACE_FIXED_CONTACT,
     PLACE_LED,
     PLACE_CHIP,
     DELETION,
 } bench_working_mode_t;
+
+typedef enum BENCH_TAB_MODE {
+    TAB_CLOSED,
+    TAB_LUA,
+    TAB_SERIAL,
+    TAB_OSCILLOSCOPE,
+} bench_tab_mode_t;
 
 #define NUM_COLORS 9
 static Color wireColors[] = {
