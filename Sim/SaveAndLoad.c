@@ -11,6 +11,7 @@
 #include <json-c/json_util.h>
 
 #include "SimulationSpace.h"
+#include "../GUI/GUI.h"
 #include "../GUI/Lib/tinyfiledialogs.h"
 #include "Components/Chip.h"
 #include "Json/AppData.h"
@@ -54,6 +55,9 @@ void SAVE_AND_LOAD_close() {
         free(SAVE_AND_LOAD_currentProject);
         SAVE_AND_LOAD_currentProject = NULL;
     }
+
+    // refresh the window title!
+    GUI_refreshWindowTitle();
 }
 
 void SAVE_AND_LOAD_save() {
@@ -68,7 +72,7 @@ void SAVE_AND_LOAD_save() {
 void SAVE_AND_LOAD_saveAs() {
 
     char *selectedFileName;
-    char *filenameFilter = "*.s3";
+    const char *filenameFilter = "*.s3";
 
     // let the user pick a location to save this project at
     selectedFileName = tinyfd_saveFileDialog(
@@ -86,11 +90,14 @@ void SAVE_AND_LOAD_saveAs() {
     strcpy(SAVE_AND_LOAD_currentProject, selectedFileName);
 
     SAVE_AND_LOAD_saveSimspace();
+
+    // refresh the window title!
+    GUI_refreshWindowTitle();
 }
 
 void SAVE_AND_LOAD_load() {
     char *selectedFileName;
-    char *filenameFilter = "*.s3";
+    const char *filenameFilter = "*.s3";
 
     // let the user open an s3 file
     selectedFileName = tinyfd_openFileDialog(
@@ -141,6 +148,9 @@ void SAVE_AND_LOAD_loadSimspace(char *filename) {
 
     // add it to the recently used files
     APPDATA_recordFileAccess(SAVE_AND_LOAD_currentProject);
+
+    // refresh the window title!
+    GUI_refreshWindowTitle();
 
     // load the saved simspace
     SAVE_AND_LOAD_loadSimspace_Format_v1(root);

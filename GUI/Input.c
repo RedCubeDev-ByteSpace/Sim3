@@ -8,6 +8,7 @@
 #include <math.h>
 #include <stdio.h>
 
+#include "Bench.h"
 #include "Grid.h"
 #include "GUI.h"
 
@@ -26,12 +27,12 @@ void INPUT_process() {
     // GRID DRAGGING
     // -------------
 
-    if (IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE)) {
+    if (IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE) || BENCH_benchMode == IDLE && IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
         dragBegin = GetMousePosition();
         isDragging = true;
     }
 
-    if (IsMouseButtonReleased(MOUSE_BUTTON_MIDDLE)) {
+    if (IsMouseButtonReleased(MOUSE_BUTTON_MIDDLE) || IsMouseButtonReleased(MOUSE_BUTTON_RIGHT)) {
         isDragging = false;
 
         // apply the offset to the actual real camera position

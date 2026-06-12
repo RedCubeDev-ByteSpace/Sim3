@@ -6,14 +6,17 @@
 
 #include <math.h>
 #include <stddef.h>
+#include <stdio.h>
 
 #include "Grid.h"
+#include "../Sim/SaveAndLoad.h"
 
 app_state_t GUI_appState;
 Font GUI_fonts[5];
+char windowTitle[255];
 
 void GUI_init() {
-    GUI_appState = APP_STATE_SIM;
+    GUI_appState = APP_STATE_MENU;
 
     GUI_fonts[COMPUTER_MODERN_150] = LoadFontEx("../Resources/cmunbx.ttf", 150, NULL, 0);
     GUI_fonts[COMPUTER_MODERN_55 ] = LoadFontEx("../Resources/cmunbx.ttf", 55, NULL, 0);
@@ -24,6 +27,18 @@ void GUI_init() {
     for (int i = 2; i < NUM_FONTS; ++i) {
         SetTextureFilter(GUI_fonts[i].texture, TEXTURE_FILTER_BILINEAR);
     }
+}
+
+void GUI_refreshWindowTitle() {
+
+    // choose a new lil title based on if we have a project open or not
+    if (SAVE_AND_LOAD_currentProject == NULL)
+        snprintf(windowTitle, 255, "sim3");
+    else
+        snprintf(windowTitle, 255, "sim3 - %s", GetFileName(SAVE_AND_LOAD_currentProject));
+
+    // set it!
+    SetWindowTitle(windowTitle);
 }
 
 float LIB_lerp(float a, float b, float f)

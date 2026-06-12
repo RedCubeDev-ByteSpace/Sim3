@@ -37,6 +37,7 @@ extern app_state_t GUI_appState;
 
 extern Font GUI_fonts[5];
 void GUI_init();
+void GUI_refreshWindowTitle();
 
 float LIB_lerp(float a, float b, float f);
 Vector2 LIB_worldSpaceToScreenSpace(Vector2 worldSpace);
